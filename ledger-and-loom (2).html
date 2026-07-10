@@ -1,0 +1,2183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledger & Loom — AI Digital Twin for Home Businesses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+:root{
+  --paper:#E7DFC9;
+  --paper-deep:#DED3B4;
+  --ink:#2A2823;
+  --ink-soft:#635C4E;
+  --ink-faint:#8B8371;
+  --card:#F6F1E3;
+  --line:#C9BE9D;
+  --marigold:#D98E29;
+  --marigold-deep:#B4721B;
+  --rust:#B14B32;
+  --rust-bg:#F1DFD5;
+  --teal:#2F6E62;
+  --teal-bg:#DCE9E1;
+  --sidebar:#20291F;
+  --sidebar-line:#3A4536;
+  --sidebar-text:#CFCBB6;
+  --shadow: 0 1px 0 rgba(42,40,35,0.06), 0 6px 16px -8px rgba(42,40,35,0.25);
+  --radius: 10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'IBM Plex Sans', sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono', monospace;}
+.display{font-family:'Fraunces', serif;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+input,select,textarea{font-family:inherit;font-size:14px;}
+#app{min-height:100vh;}
+
+/* ---------- Ledger stitch card, the signature element ---------- */
+.stitch-card{
+  position:relative;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.stitch-card::before{
+  content:"";
+  position:absolute;
+  inset:6px;
+  border:1px dashed rgba(42,40,35,0.16);
+  border-radius:6px;
+  pointer-events:none;
+}
+.stitch-card .tag-hole{
+  position:absolute;
+  top:14px; left:14px;
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1px solid var(--line);
+}
+
+/* ---------- Scaffolding ---------- */
+.center-screen{
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;
+  border-radius:7px;
+  border:1px solid transparent;
+  font-weight:600;
+  font-size:14px;
+  transition:transform .12s ease, background .15s ease, border-color .15s ease;
+}
+.btn:active{transform:translateY(1px);}
+.btn-primary{background:var(--marigold);color:#241B08;border-color:var(--marigold-deep);}
+.btn-primary:hover{background:var(--marigold-deep);}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line);}
+.btn-ghost:hover{background:rgba(42,40,35,0.05);}
+.btn-danger{background:var(--rust-bg);color:var(--rust);border-color:#D9B9A9;}
+.btn-danger:hover{background:#e7cec1;}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:6px;}
+.btn-block{width:100%;}
+
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.02em;text-transform:uppercase;}
+.field input, .field select, .field textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:7px;
+  background:#FBF8EF;color:var(--ink);outline:none;
+}
+.field input:focus, .field select:focus, .field textarea:focus{border-color:var(--marigold-deep);}
+.field-row{display:flex;gap:12px;}
+.field-row > .field{flex:1;}
+.hint{font-size:12px;color:var(--ink-faint);margin-top:4px;}
+.err{color:var(--rust);font-size:12.5px;margin-top:8px;}
+
+/* ---------- Landing ---------- */
+.landing-hero{
+  max-width:1080px;margin:0 auto;padding:64px 24px 40px;
+}
+.landing-nav{
+  max-width:1080px;margin:0 auto;padding:20px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:19px;}
+.brand .mark{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--sidebar);color:var(--marigold);
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  border:2px solid var(--marigold);
+}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--teal);font-weight:600;
+  padding:5px 10px;border:1px solid var(--teal);border-radius:20px;
+  margin-bottom:22px;background:var(--teal-bg);
+}
+.hero-title{font-family:'Fraunces',serif;font-size:56px;line-height:1.04;font-weight:600;margin:0 0 20px;letter-spacing:-.01em;}
+.hero-title em{font-style:italic;color:var(--marigold-deep);}
+.hero-sub{font-size:17px;color:var(--ink-soft);max-width:560px;line-height:1.6;margin-bottom:30px;}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:56px;}
+.ledger-strip{
+  display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  margin:40px 0;flex-wrap:wrap;
+}
+.ledger-strip .li{flex:1;min-width:150px;padding:18px 20px;border-right:1px dashed var(--line);}
+.ledger-strip .li:last-child{border-right:none;}
+.ledger-strip .li .num{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--marigold-deep);}
+.ledger-strip .li .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1080px;margin:0 auto;padding:0 24px 80px;}
+.feature-card{padding:22px;}
+.feature-card .fi{font-size:22px;margin-bottom:10px;display:block;}
+.feature-card h3{font-family:'Fraunces',serif;font-size:17px;margin:0 0 6px;}
+.feature-card p{font-size:13.5px;color:var(--ink-soft);line-height:1.55;margin:0;}
+@media(max-width:760px){.hero-title{font-size:38px;}.feature-grid{grid-template-columns:1fr;}}
+
+/* ---------- Auth ---------- */
+.auth-card{width:100%;max-width:420px;padding:34px 32px;}
+.auth-card h1{font-family:'Fraunces',serif;font-size:26px;margin:6px 0 6px;}
+.auth-card .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:26px;}
+.auth-switch{text-align:center;margin-top:18px;font-size:13.5px;color:var(--ink-soft);}
+.auth-switch a{color:var(--marigold-deep);font-weight:600;}
+.demo-box{margin-top:18px;padding:12px 14px;background:var(--paper-deep);border:1px dashed var(--line);border-radius:7px;font-size:12px;color:var(--ink-soft);line-height:1.6;}
+
+/* ---------- App shell ---------- */
+.shell{display:flex;min-height:100vh;}
+.sidebar{
+  width:230px;flex-shrink:0;background:var(--sidebar);color:var(--sidebar-text);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
+}
+.sidebar .brand{color:#F2EEDF;padding:20px 18px 16px;border-bottom:1px solid var(--sidebar-line);}
+.sidebar .brand .mark{border-color:var(--marigold);}
+.nav-group{padding:14px 10px;flex:1;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:7px;
+  font-size:13.5px;font-weight:500;color:var(--sidebar-text);margin-bottom:2px;
+  border-left:2px solid transparent;
+}
+.nav-item .ic{width:16px;text-align:center;font-size:14px;}
+.nav-item:hover{background:rgba(255,255,255,0.05);}
+.nav-item.active{background:rgba(217,142,41,0.14);color:#F4E3C4;border-left-color:var(--marigold);}
+.nav-foot{padding:14px;border-top:1px solid var(--sidebar-line);font-size:12px;}
+.nav-foot .who{font-weight:600;color:#EDE8D6;margin-bottom:8px;font-size:13px;}
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 28px;border-bottom:1px solid var(--line);background:var(--paper);
+  position:sticky;top:0;z-index:5;
+}
+.topbar h1{font-family:'Fraunces',serif;font-size:22px;margin:0;}
+.topbar .sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+.content{padding:26px 28px 60px;max-width:1280px;width:100%;margin:0 auto;}
+
+/* ---------- KPI / tables / misc ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.kpi-card{padding:16px 18px;position:relative;overflow:hidden;}
+.kpi-card .lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);font-weight:600;}
+.kpi-card .val{font-family:'IBM Plex Mono',monospace;font-size:25px;font-weight:600;margin-top:8px;}
+.kpi-card .delta{font-size:12px;margin-top:6px;font-weight:600;}
+.delta.up{color:var(--teal);}
+.delta.down{color:var(--rust);}
+@media(max-width:1000px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:28px 0 12px;}
+.section-title h2{font-family:'Fraunces',serif;font-size:19px;margin:0;}
+.section-title .sub{font-size:12.5px;color:var(--ink-soft);}
+
+.grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;}
+.grid-2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:900px){.grid-2,.grid-2b{grid-template-columns:1fr;}}
+.panel{padding:18px 20px;}
+.panel h3{font-family:'Fraunces',serif;font-size:16px;margin:0 0 14px;}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{
+  text-align:left;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--ink-soft);border-bottom:1px solid var(--line);font-weight:600;
+}
+td{padding:11px 10px;border-bottom:1px solid rgba(201,190,157,0.5);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.table-wrap{overflow-x:auto;}
+.row-title{font-weight:600;}
+.row-sub{font-size:11.5px;color:var(--ink-faint);}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.02em;}
+.badge-teal{background:var(--teal-bg);color:var(--teal);}
+.badge-rust{background:var(--rust-bg);color:var(--rust);}
+.badge-marigold{background:#F4E3C4;color:var(--marigold-deep);}
+.badge-neutral{background:var(--paper-deep);color:var(--ink-soft);}
+
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.toolbar .search{flex:1;min-width:180px;}
+.toolbar input, .toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:7px;background:#FBF8EF;}
+
+.empty{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+.empty .ei{font-size:30px;display:block;margin-bottom:10px;}
+
+.chip-list{display:flex;gap:8px;flex-wrap:wrap;}
+.icon-btn{
+  background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 8px;font-size:12.5px;color:var(--ink-soft);
+}
+.icon-btn:hover{background:rgba(42,40,35,0.05);color:var(--ink);}
+
+/* Modal */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(32,41,31,0.45);display:flex;align-items:center;justify-content:center;
+  z-index:50;padding:20px;
+}
+.modal{width:100%;max-width:520px;padding:26px;max-height:88vh;overflow-y:auto;}
+.modal h2{font-family:'Fraunces',serif;font-size:20px;margin:0 0 18px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+
+/* AI insights */
+.insight-card{padding:16px 18px;display:flex;gap:12px;align-items:flex-start;margin-bottom:10px;}
+.insight-card .ii{font-size:18px;flex-shrink:0;margin-top:2px;}
+.insight-card h4{margin:0 0 4px;font-size:14px;}
+.insight-card p{margin:0;font-size:13px;color:var(--ink-soft);line-height:1.55;}
+.narrative{
+  padding:20px 22px;font-family:'Fraunces',serif;font-style:italic;font-size:16px;line-height:1.7;color:var(--ink);
+  border-left:3px solid var(--marigold);background:var(--card);
+}
+
+.alert-strip{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:7px;font-size:13px;margin-bottom:14px;}
+.alert-strip.warn{background:var(--rust-bg);color:var(--rust);border:1px solid #DBB6A5;}
+.alert-strip.ok{background:var(--teal-bg);color:var(--teal);border:1px solid #B9D2C6;}
+
+.chart-box{position:relative;height:230px;}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px;}
+.tab{padding:9px 16px;font-size:13px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;}
+.tab.active{color:var(--marigold-deep);border-bottom-color:var(--marigold-deep);}
+
+/* Customer / shop */
+.shop-nav{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid var(--line);}
+.shop-wrap{max-width:1080px;margin:0 auto;padding:28px 24px 70px;}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+.product-card{padding:16px;}
+.product-emoji{font-size:34px;margin-bottom:10px;}
+.product-card h3{font-family:'Fraunces',serif;font-size:16px;margin:0 0 4px;}
+.product-card .cat{font-size:11.5px;color:var(--ink-faint);margin-bottom:10px;}
+.product-card .price{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:17px;color:var(--marigold-deep);}
+.stock-line{font-size:12px;margin-top:6px;}
+
+.footer-note{text-align:center;font-size:12px;color:var(--ink-faint);padding:20px;}
+
+@media print{
+  .no-print{display:none !important;}
+  body{background:#fff;}
+  .stitch-card{box-shadow:none;}
+}
+@media(max-width:860px){
+  .shell{flex-direction:column;}
+  .sidebar{position:relative;height:auto;width:100%;flex-direction:row;overflow-x:auto;}
+  .sidebar .brand{display:none;}
+  .nav-group{display:flex;padding:8px;}
+  .nav-item{white-space:nowrap;}
+  .nav-foot{display:none;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+}
+
+/* =========================================================
+   NEW: interactive dashboard / 3D tilt / animations
+   ========================================================= */
+.tilt-card{ transform-style:preserve-3d; transition:transform .12s ease, box-shadow .2s ease; will-change:transform; }
+.tilt-card:hover{ box-shadow:0 18px 34px -14px rgba(42,40,35,0.35); z-index:2; }
+.kpi-card{ cursor:default; }
+.kpi-card .val{ transition:color .2s ease; }
+.kpi-card:hover .val{ color:var(--marigold-deep); }
+.kpi-card .spark{ position:absolute; right:10px; top:10px; font-size:16px; opacity:.35; transform:translateZ(20px); animation:floaty 3.4s ease-in-out infinite; }
+@keyframes floaty{ 0%,100%{transform:translateY(0px) translateZ(20px);} 50%{transform:translateY(-4px) translateZ(20px);} }
+@keyframes floaty-big{ 0%,100%{transform:translateY(0px) rotate(-2deg);} 50%{transform:translateY(-6px) rotate(2deg);} }
+@keyframes popIn{ 0%{opacity:0; transform:scale(.85) translateY(6px);} 100%{opacity:1; transform:scale(1) translateY(0);} }
+@keyframes pulseRing{ 0%{box-shadow:0 0 0 0 rgba(177,75,50,0.45);} 70%{box-shadow:0 0 0 10px rgba(177,75,50,0);} 100%{box-shadow:0 0 0 0 rgba(177,75,50,0);} }
+
+.kpi-grid .kpi-card{ animation:popIn .4s ease backwards; }
+.kpi-grid .kpi-card:nth-child(1){animation-delay:.02s;} .kpi-grid .kpi-card:nth-child(2){animation-delay:.06s;}
+.kpi-grid .kpi-card:nth-child(3){animation-delay:.10s;} .kpi-grid .kpi-card:nth-child(4){animation-delay:.14s;}
+.kpi-grid .kpi-card:nth-child(5){animation-delay:.18s;} .kpi-grid .kpi-card:nth-child(6){animation-delay:.22s;}
+.kpi-grid .kpi-card:nth-child(7){animation-delay:.26s;} .kpi-grid .kpi-card:nth-child(8){animation-delay:.30s;}
+
+.hero-strip{
+  display:flex; gap:14px; overflow-x:auto; padding:4px 2px 14px; margin-bottom:6px; scroll-snap-type:x proximity;
+}
+.hero-item{
+  flex:0 0 auto; width:170px; padding:16px 14px; text-align:center; position:relative; overflow:hidden;
+  scroll-snap-align:start; cursor:pointer;
+}
+.hero-item .hi-emoji{ font-size:38px; display:block; margin-bottom:8px; animation:floaty-big 3.6s ease-in-out infinite; filter:drop-shadow(0 6px 8px rgba(42,40,35,0.25)); }
+.hero-item:nth-child(odd) .hi-emoji{ animation-duration:4.2s; }
+.hero-item .hi-name{ font-weight:600; font-size:13px; margin-bottom:4px; }
+.hero-item .hi-sub{ font-size:11px; color:var(--ink-soft); }
+.hero-item:hover{ transform:translateY(-4px) scale(1.03); }
+.hero-item.low{ border-color:var(--rust); }
+.hero-item.low::after{ content:"low stock"; position:absolute; top:6px; right:6px; background:var(--rust); color:#fff; font-size:9px; font-weight:700; padding:2px 6px; border-radius:20px; letter-spacing:.03em; text-transform:uppercase; }
+
+.pulse-dot{ display:inline-block; width:8px;height:8px;border-radius:50%; background:var(--rust); animation:pulseRing 1.6s infinite; margin-right:6px; }
+
+.seller-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed rgba(201,190,157,0.6); }
+.seller-row:last-child{ border-bottom:none; }
+.seller-row .bar-track{ flex:1; height:8px; border-radius:5px; background:var(--paper-deep); overflow:hidden; }
+.seller-row .bar-fill{ height:100%; border-radius:5px; transition:width .6s ease; }
+.seller-row .s-rank{ width:20px; font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--ink-faint); }
+.seller-row .s-name{ width:120px; flex-shrink:0; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.seller-row .s-qty{ width:60px; text-align:right; font-family:'IBM Plex Mono',monospace; font-size:12.5px; flex-shrink:0; }
+
+/* Red low-stock warning popup */
+.warn-backdrop{ position:fixed; inset:0; background:rgba(60,20,15,0.42); display:flex; align-items:center; justify-content:center; z-index:80; padding:20px; animation:popIn .18s ease; }
+.warn-modal{ width:100%; max-width:440px; background:#FBEDE7; border:2px solid var(--rust); border-radius:12px; padding:22px 24px; box-shadow:0 20px 50px -12px rgba(120,30,15,.45); animation:popIn .22s ease; }
+.warn-modal .wm-head{ display:flex; align-items:center; gap:10px; color:var(--rust); font-weight:700; font-size:16px; margin-bottom:10px; font-family:'Fraunces',serif; }
+.warn-modal .wm-icon{ font-size:22px; animation:pulseRing 1.4s infinite; border-radius:50%; }
+.warn-modal ul{ margin:10px 0 16px; padding-left:18px; color:#7A2E1E; font-size:13.5px; line-height:1.7; }
+.warn-modal .wm-actions{ display:flex; gap:10px; justify-content:flex-end; }
+
+/* Notification bell */
+.bell-wrap{ position:relative; }
+.bell-btn{ background:transparent; border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:15px; position:relative; }
+.bell-btn:hover{ background:rgba(42,40,35,0.05); }
+.bell-badge{ position:absolute; top:-5px; right:-5px; background:var(--rust); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:20px; min-width:16px; text-align:center; }
+.bell-panel{ position:absolute; top:calc(100% + 8px); right:0; width:320px; max-height:400px; overflow-y:auto; background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow); z-index:40; padding:6px; }
+.bell-item{ padding:10px 12px; border-radius:8px; font-size:12.5px; line-height:1.5; }
+.bell-item:hover{ background:var(--paper-deep); }
+.bell-item .bi-top{ display:flex; justify-content:space-between; font-weight:600; margin-bottom:2px; }
+.bell-item .bi-src{ font-size:10px; text-transform:uppercase; letter-spacing:.03em; padding:1px 6px; border-radius:20px; }
+.bell-item .bi-src.wa{ background:#DCF3E4; color:#1E7A45; }
+.bell-item .bi-src.gm{ background:#FBE3DD; color:#B4432A; }
+.bell-empty{ padding:24px; text-align:center; color:var(--ink-faint); font-size:12.5px; }
+
+/* AI chatbox */
+.chat-fab{ position:fixed; bottom:22px; right:22px; width:56px; height:56px; border-radius:50%; background:var(--sidebar); color:var(--marigold); border:2px solid var(--marigold); font-size:24px; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px -6px rgba(0,0,0,.35); z-index:60; animation:floaty 3s ease-in-out infinite; }
+.chat-fab:hover{ transform:scale(1.06); }
+.chat-panel{ position:fixed; bottom:90px; right:22px; width:340px; max-height:70vh; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:0 20px 50px -14px rgba(0,0,0,.4); z-index:60; display:flex; flex-direction:column; overflow:hidden; animation:popIn .18s ease; }
+.chat-head{ background:var(--sidebar); color:#F2EEDF; padding:14px 16px; font-family:'Fraunces',serif; font-size:15px; display:flex; justify-content:space-between; align-items:center; }
+.chat-head small{ display:block; color:var(--sidebar-text); font-size:11px; font-family:'IBM Plex Sans',sans-serif; margin-top:2px; }
+.chat-body{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+.chat-msg{ max-width:85%; padding:9px 12px; border-radius:12px; font-size:13px; line-height:1.5; }
+.chat-msg.bot{ background:var(--paper-deep); align-self:flex-start; border-bottom-left-radius:3px; }
+.chat-msg.user{ background:var(--marigold); color:#241B08; align-self:flex-end; border-bottom-right-radius:3px; font-weight:500; }
+.chat-quick{ display:flex; gap:6px; flex-wrap:wrap; padding:0 14px 10px; }
+.chat-quick button{ font-size:11.5px; padding:5px 10px; border-radius:20px; background:var(--paper-deep); border:1px solid var(--line); color:var(--ink-soft); }
+.chat-quick button:hover{ background:var(--marigold); color:#241B08; }
+.chat-input-row{ display:flex; gap:8px; padding:10px; border-top:1px solid var(--line); }
+.chat-input-row input{ flex:1; padding:9px 10px; border:1px solid var(--line); border-radius:20px; background:#FBF8EF; font-size:13px; outline:none; }
+.chat-input-row button{ width:36px;height:36px;border-radius:50%; background:var(--marigold); border:none; color:#241B08; font-size:15px; }
+
+/* EOD modal */
+.eod-modal{ max-width:460px; }
+.eod-modal .eod-icon{ font-size:30px; margin-bottom:8px; display:block; }
+.leftover-item{ display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px dashed rgba(201,190,157,.6); font-size:13px; }
+
+/* Payment module */
+.pay-methods{ display:flex; gap:10px; flex-wrap:wrap; }
+.pay-opt{ flex:1; min-width:100px; border:1px solid var(--line); border-radius:8px; padding:10px 8px; text-align:center; cursor:pointer; font-size:12.5px; font-weight:600; background:#FBF8EF; }
+.pay-opt.selected{ border-color:var(--marigold-deep); background:#F4E3C4; }
+.pay-opt .po-ic{ display:block; font-size:20px; margin-bottom:4px; }
+
+.expiry-warn{ color:var(--rust); font-weight:600; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   STORAGE HELPERS
+   ========================================================= */
+async function loadKey(key, shared, fallback){
+  try{
+    const res = await window.storage.get(key, shared);
+    if(!res) return fallback;
+    return JSON.parse(res.value);
+  }catch(e){ return fallback; }
+}
+async function saveKey(key, shared, value){
+  try{ await window.storage.set(key, JSON.stringify(value), shared); }catch(e){ console.error('storage save failed', e); }
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const STATE = {
+  ready:false,
+  user:null,           // {id,name,email,role}
+  users:[],            // shared account list (demo auth)
+  profile:null,        // business profile
+  products:[],
+  orders:[],
+  expenses:[],
+  notifications:[],    // simulated WhatsApp / Gmail order & inquiry pings
+  eodLogs:[],           // end-of-day "closing shop" logs
+  charts:{},           // chart.js instances keyed by canvas id
+  chatOpen:false,
+  chatHistory:[],
+  bellOpen:false,
+};
+
+const UNITS = ['pcs','kg','g','litre','ml','dozen','box','set'];
+const EXPENSE_TYPES = ['Raw materials','Packaging','Delivery','Marketing','Utilities','Other'];
+const EMOJIS = ['🍪','🎂','🧁','🍯','🕯️','🧼','🧵','👜','🧶','🖼️','💍','🌿','🍫','🥖','🧺'];
+const PAY_METHODS = [['Cash/UPI','💵'],['Razorpay','🔵'],['PayPal','🅿️']];
+const LOW_STOCK_THRESHOLD = 10; // absolute red-alert threshold requested (below 10 units)
+const PENDING_REASONS = ['Awaiting payment confirmation','Ingredients not ready','Awaiting customer confirmation','Custom order — pending details','Delivery slot not finalized','Other'];
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+function uid(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,9); }
+function fmtMoney(n){
+  const cur = (STATE.profile && STATE.profile.currency) || '₹';
+  const v = Number(n||0);
+  return cur + v.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2});
+}
+function fmtDate(d){
+  if(!d) return '—';
+  const dt = new Date(d);
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
+}
+function todayISO(offsetDays){
+  const d = new Date();
+  if(offsetDays) d.setDate(d.getDate()+offsetDays);
+  return d.toISOString().slice(0,10);
+}
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function go(hash){ location.hash = hash; }
+function productById(id){ return STATE.products.find(p=>p.id===id); }
+function toast(msg){
+  let t = document.getElementById('toast');
+  if(!t){
+    t = document.createElement('div');
+    t.id='toast';
+    t.style.cssText='position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#20291F;color:#F2EEDF;padding:11px 20px;border-radius:8px;font-size:13.5px;z-index:200;box-shadow:0 8px 20px rgba(0,0,0,.25);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity='1';
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>{ t.style.transition='opacity .4s'; t.style.opacity='0'; }, 1800);
+}
+
+/* =========================================================
+   SEED DATA
+   ========================================================= */
+function seedProfile(){
+  return {
+    businessName:'Maple & Mira Kitchen',
+    category:'Homemade Food & Baking',
+    ownerName:'Mira Fernandes',
+    contact:'+91 98765 43210',
+    description:'Small-batch cakes, cookies and preserves made fresh from a home kitchen in Chennai.',
+    currency:'₹'
+  };
+}
+function seedProducts(){
+  const base = [
+    ['Classic Vanilla Cake (1kg)','Cakes',850,420,6,'pcs',4,'🎂'],
+    ['Choco Truffle Jar Cake','Cakes',420,190,10,'pcs',5,'🧁'],
+    ['Butter Cookies Box (12pc)','Cookies',280,110,18,'box',8,'🍪'],
+    ['Homemade Peanut Butter (400g)','Preserves',320,150,3,'pcs',6,'🥜'],
+    ['Mixed Berry Jam (250g)','Preserves',260,95,14,'pcs',6,'🍇'],
+    ['Banana Bread Loaf','Bakes',380,160,2,'pcs',5,'🍞'],
+    ['Soy Candle — Lavender','Candles',420,180,20,'pcs',5,'🕯️'],
+    ['Handmade Soap Bar (Oatmeal)','Soaps',180,70,25,'pcs',10,'🧼'],
+  ];
+  return base.map(b=>({
+    id:uid('p'), name:b[0], category:b[1], price:b[2], costPrice:b[3],
+    quantity:b[4], unit:b[5], restockLevel:b[6], emoji:b[7],
+    status:'active', notes:'', createdAt:new Date().toISOString()
+  }));
+}
+function seedOrders(products){
+  const names=['Priya Raman','Arjun Mehta','Sana Iqbal','Karthik Rao','Divya Nair','Leo Fernandes','Aditi Bose','Farhan Sheikh'];
+  const pay=['Paid','Paid','Pending','Paid','Paid','Pending'];
+  const del=['Delivered','Delivered','Confirmed','Packed','Delivered','Pending'];
+  const orders=[];
+  for(let i=0;i<16;i++){
+    const p = products[Math.floor(Math.random()*products.length)];
+    const qty = 1+Math.floor(Math.random()*3);
+    const daysAgo = Math.floor(Math.random()*20);
+    const delivery = del[Math.floor(Math.random()*del.length)];
+    const payment = pay[Math.floor(Math.random()*pay.length)];
+    orders.push({
+      id:uid('o'), customerName:names[i%names.length], phone:'9'+Math.floor(100000000+Math.random()*899999999),
+      productId:p.id, quantity:qty, totalAmount:qty*p.price,
+      paymentStatus:payment,
+      deliveryStatus:delivery,
+      pendingReason: (delivery==='Pending'||payment==='Pending') ? PENDING_REASONS[Math.floor(Math.random()*PENDING_REASONS.length)] : '',
+      bakedDate: todayISO(-daysAgo-1),
+      expiryDate: todayISO(-daysAgo+4),
+      paymentMethod: PAY_METHODS[Math.floor(Math.random()*PAY_METHODS.length)][0],
+      orderDate:todayISO(-daysAgo), source: i%5===0?'customer':'owner',
+      address:'Chennai, TN', createdAt:new Date().toISOString()
+    });
+  }
+  return orders;
+}
+function seedExpenses(){
+  const rows=[
+    ['Raw materials','Flour, butter, sugar restock',6200,-3],
+    ['Packaging','Cake boxes & jars (100 units)',3400,-6],
+    ['Delivery','Local courier — weekly batch',1800,-2],
+    ['Marketing','Instagram promo boost',900,-9],
+    ['Utilities','Extra LPG cylinder',1200,-14],
+    ['Raw materials','Berries & preserving sugar',2600,-16],
+  ];
+  return rows.map(r=>({id:uid('e'), type:r[0], description:r[1], amount:r[2], date:todayISO(r[3]), createdAt:new Date().toISOString()}));
+}
+function seedNotifications(){
+  return [
+    {id:uid('n'), source:'whatsapp', title:'New order enquiry — Priya R.', body:'"Hi! Do you have the Choco Truffle Jar Cake in stock for tomorrow?"', read:false, createdAt:new Date(Date.now()-1000*60*40).toISOString()},
+    {id:uid('n'), source:'gmail', title:'Order confirmation requested', body:'Customer emailed asking to confirm delivery address for their cookie box order.', read:false, createdAt:new Date(Date.now()-1000*60*140).toISOString()},
+    {id:uid('n'), source:'whatsapp', title:'Payment screenshot received', body:'Customer sent a UPI payment screenshot for ₹850 — awaiting manual confirmation.', read:true, createdAt:new Date(Date.now()-1000*60*60*6).toISOString()},
+  ];
+}
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+async function boot(){
+  STATE.profile = await loadKey('biz:profile', true, null);
+  STATE.products = await loadKey('biz:products', true, null);
+  STATE.orders   = await loadKey('biz:orders', true, null);
+  STATE.expenses = await loadKey('biz:expenses', true, null);
+  STATE.users    = await loadKey('biz:users', true, []);
+  STATE.notifications = await loadKey('biz:notifications', true, []);
+  STATE.eodLogs  = await loadKey('biz:eodlogs', true, []);
+
+  let needsSave = false;
+  if(!STATE.profile){ STATE.profile = seedProfile(); needsSave = true; }
+  if(!STATE.products){ STATE.products = seedProducts(); needsSave = true; }
+  if(!STATE.orders){ STATE.orders = seedOrders(STATE.products); needsSave = true; }
+  if(!STATE.expenses){ STATE.expenses = seedExpenses(); needsSave = true; }
+  if(!STATE.notifications || !STATE.notifications.length){ STATE.notifications = seedNotifications(); needsSave = true; }
+  if(!STATE.users || !STATE.users.length){
+    STATE.users = [{id:uid('u'), name:'Mira Fernandes', email:'mira@demo.com', pass:btoa('demo1234'), role:'owner', createdAt:new Date().toISOString()}];
+    needsSave = true;
+  }
+  if(needsSave) await persistAll();
+
+  STATE.user = await loadKey('session:user', false, null);
+  STATE.ready = true;
+  window.addEventListener('hashchange', render);
+  if(!location.hash) location.hash = '#/';
+  render();
+  startSimulatedInbox();
+  initChatWidget();
+}
+async function persistAll(){
+  await Promise.all([
+    saveKey('biz:profile', true, STATE.profile),
+    saveKey('biz:products', true, STATE.products),
+    saveKey('biz:orders', true, STATE.orders),
+    saveKey('biz:expenses', true, STATE.expenses),
+    saveKey('biz:users', true, STATE.users),
+    saveKey('biz:notifications', true, STATE.notifications),
+    saveKey('biz:eodlogs', true, STATE.eodLogs),
+  ]);
+}
+async function persistProducts(){ await saveKey('biz:products', true, STATE.products); }
+async function persistOrders(){ await saveKey('biz:orders', true, STATE.orders); }
+async function persistExpenses(){ await saveKey('biz:expenses', true, STATE.expenses); }
+async function persistProfile(){ await saveKey('biz:profile', true, STATE.profile); }
+async function persistUsers(){ await saveKey('biz:users', true, STATE.users); }
+async function persistNotifications(){ await saveKey('biz:notifications', true, STATE.notifications); }
+async function persistEodLogs(){ await saveKey('biz:eodlogs', true, STATE.eodLogs); }
+
+/* =========================================================
+   AI INSIGHT ENGINE (rule-based; structured so an ML model
+   could later replace computeSalesByProduct / demand estimate)
+   ========================================================= */
+function computeInsights(){
+  const products = STATE.products, orders = STATE.orders, expenses = STATE.expenses;
+  const salesByProduct = {};
+  products.forEach(p=> salesByProduct[p.id] = {product:p, qty:0, revenue:0, orders:0});
+  orders.forEach(o=>{
+    const s = salesByProduct[o.productId];
+    if(!s) return;
+    s.qty += Number(o.quantity||0);
+    s.revenue += Number(o.totalAmount||0);
+    s.orders += 1;
+  });
+  const ranked = Object.values(salesByProduct).sort((a,b)=>b.qty-a.qty);
+  const bestSelling = ranked.filter(r=>r.qty>0).slice(0,3);
+  const avgQty = ranked.length ? ranked.reduce((s,r)=>s+r.qty,0)/ranked.length : 0;
+  const underperforming = ranked.filter(r=> r.qty <= avgQty*0.4 ).slice(0,4);
+
+  const lowStock = products.filter(p=> Number(p.quantity) <= Number(p.restockLevel));
+
+  const totalRevenue = orders.reduce((s,o)=>s+Number(o.totalAmount||0),0);
+  const totalCost = orders.reduce((s,o)=>{
+    const p = productById(o.productId);
+    return s + (p ? Number(p.costPrice||0)*Number(o.quantity||0) : 0);
+  },0);
+  const totalExpenses = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const profit = totalRevenue - totalCost - totalExpenses;
+
+  // week over week trend
+  const now = new Date();
+  const wStart = new Date(now); wStart.setDate(now.getDate()-7);
+  const w2Start = new Date(now); w2Start.setDate(now.getDate()-14);
+  function windowProfit(from,to){
+    const wOrders = orders.filter(o=>{ const d=new Date(o.orderDate); return d>=from && d<to; });
+    const rev = wOrders.reduce((s,o)=>s+Number(o.totalAmount||0),0);
+    const cost = wOrders.reduce((s,o)=>{ const p=productById(o.productId); return s+(p?Number(p.costPrice||0)*Number(o.quantity||0):0); },0);
+    return rev-cost;
+  }
+  const thisWeek = windowProfit(wStart, now);
+  const lastWeek = windowProfit(w2Start, wStart);
+  const trendUp = thisWeek >= lastWeek;
+  const trendPct = lastWeek!==0 ? Math.round(((thisWeek-lastWeek)/Math.abs(lastWeek))*100) : (thisWeek>0?100:0);
+
+  // production recommendation: top sellers that are also low stock
+  const productionRecs = bestSelling
+    .filter(r=> r.product.quantity <= r.product.restockLevel*1.5)
+    .map(r=> ({ product:r.product, suggestQty: Math.max(r.product.restockLevel*2 - r.product.quantity, Math.ceil(r.qty*0.5)) }));
+
+  // risks
+  const risks = [];
+  if(lowStock.length >= Math.max(2, Math.ceil(products.length*0.3))) risks.push(`${lowStock.length} products are at or below restock level — a stockout could cost you upcoming orders.`);
+  if(!trendUp) risks.push(`Profit is down ${Math.abs(trendPct)}% versus last week — worth checking pricing or expense creep.`);
+  const revenueShare = ranked[0] && totalRevenue>0 ? (ranked[0].revenue/totalRevenue) : 0;
+  if(revenueShare > 0.5) risks.push(`Over ${Math.round(revenueShare*100)}% of revenue comes from one product (${ranked[0].product.name}) — diversifying reduces risk.`);
+  if(totalExpenses > totalRevenue*0.5 && totalRevenue>0) risks.push(`Expenses are ${Math.round((totalExpenses/totalRevenue)*100)}% of revenue — margins are getting tight.`);
+  if(risks.length===0) risks.push('No major risks detected this period — inventory and margins look healthy.');
+
+  const suggestions = [];
+  if(bestSelling[0]) suggestions.push(`Feature "${bestSelling[0].product.name}" in your next promotion — it's your strongest seller.`);
+  if(underperforming[0]) suggestions.push(`Consider a bundle or discount on "${underperforming[0].product.name}" to clear slow-moving stock.`);
+  if(lowStock.length) suggestions.push(`Restock ${lowStock.map(p=>p.name).slice(0,2).join(', ')}${lowStock.length>2?' and others':''} before you run out.`);
+  suggestions.push(trendUp ? 'Momentum is positive — this is a good week to invest a little more in marketing.' : 'Consider trimming non-essential expenses until profit trend recovers.');
+
+  const narrative = `This week, ${STATE.profile?.businessName || 'your business'} brought in ${fmtMoney(thisWeek+0)} in gross margin`+
+    ` from orders, ${trendUp?'up':'down'} ${Math.abs(trendPct)}% versus the previous week. `+
+    `${bestSelling[0] ? `"${bestSelling[0].product.name}" is leading sales with ${bestSelling[0].qty} units moved. ` : ''}`+
+    `${lowStock.length ? `${lowStock.length} product${lowStock.length>1?'s are':' is'} running low and worth restocking soon. ` : 'Stock levels look comfortable across the board. '}`+
+    `${productionRecs.length ? `Consider producing more ${productionRecs[0].product.name.toLowerCase()} — demand is outpacing supply.` : ''}`;
+
+  return {
+    ranked, bestSelling, underperforming, lowStock,
+    totalRevenue, totalCost, totalExpenses, profit,
+    thisWeek, lastWeek, trendUp, trendPct,
+    productionRecs, risks, suggestions, narrative
+  };
+}
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+async function doSignup(name,email,pass){
+  email = email.trim().toLowerCase();
+  if(STATE.users.some(u=>u.email===email)) return {error:'An account with that email already exists.'};
+  const user = {id:uid('u'), name, email, pass:btoa(pass), role:'owner', createdAt:new Date().toISOString()};
+  STATE.users.push(user);
+  await persistUsers();
+  STATE.user = {id:user.id,name:user.name,email:user.email,role:user.role};
+  await saveKey('session:user', false, STATE.user);
+  return {ok:true};
+}
+async function doLogin(email,pass){
+  email=email.trim().toLowerCase();
+  const u = STATE.users.find(u=>u.email===email);
+  if(!u || u.pass!==btoa(pass)) return {error:'Incorrect email or password.'};
+  STATE.user = {id:u.id,name:u.name,email:u.email,role:u.role};
+  await saveKey('session:user', false, STATE.user);
+  return {ok:true};
+}
+async function doLogout(){
+  STATE.user = null;
+  await saveKey('session:user', false, null);
+  go('#/');
+}
+
+/* =========================================================
+   RENDER ROOT / ROUTER
+   ========================================================= */
+function render(){
+  if(!STATE.ready) return;
+  const hash = location.hash || '#/';
+  const app = document.getElementById('app');
+
+  const protectedRoutes = ['#/dashboard','#/profile','#/products','#/orders','#/inventory','#/expenses','#/ai-insights','#/reports','#/settings'];
+  if(protectedRoutes.includes(hash.split('?')[0]) && !STATE.user){
+    app.innerHTML = renderLogin();
+    bindLogin();
+    return;
+  }
+
+  const route = hash.split('?')[0];
+  if(route === '#/'){ app.innerHTML = renderLanding(); return; }
+  if(route === '#/login'){ app.innerHTML = renderLogin(); bindLogin(); return; }
+  if(route === '#/signup'){ app.innerHTML = renderSignup(); bindSignup(); return; }
+  if(route === '#/shop'){ app.innerHTML = renderShop(); bindShop(); return; }
+  if(route === '#/shop-order'){ app.innerHTML = renderShopOrder(); bindShopOrder(); return; }
+  if(route === '#/shop-status'){ app.innerHTML = renderShopStatus(); bindShopStatus(); return; }
+
+  // owner app shell routes
+  const pages = {
+    '#/dashboard': renderDashboard,
+    '#/profile': renderProfile,
+    '#/products': renderProducts,
+    '#/orders': renderOrders,
+    '#/inventory': renderInventory,
+    '#/expenses': renderExpenses,
+    '#/ai-insights': renderAIInsights,
+    '#/reports': renderReports,
+    '#/settings': renderSettings,
+  };
+  const fn = pages[route] || renderDashboard;
+  app.innerHTML = shellWrap(route, fn());
+  bindShellNav();
+  const afterMap = {
+    '#/dashboard': afterDashboard,
+    '#/profile': afterProfile,
+    '#/products': afterProducts,
+    '#/orders': afterOrders,
+    '#/inventory': afterInventory,
+    '#/expenses': afterExpenses,
+    '#/ai-insights': afterAIInsights,
+    '#/reports': afterReports,
+    '#/settings': afterSettings,
+  };
+  if(afterMap[route]) afterMap[route]();
+}
+
+/* =========================================================
+   LANDING
+   ========================================================= */
+function renderLanding(){
+  return `
+  <div class="landing-nav">
+    <div class="brand"><span class="mark">L</span> Ledger &amp; Loom</div>
+    <div style="display:flex;gap:10px;">
+      <a class="btn btn-ghost" href="#/shop">View shop demo</a>
+      <a class="btn btn-primary" href="#/login">Owner login</a>
+    </div>
+  </div>
+  <div class="landing-hero">
+    <div class="hero-eyebrow">● AI digital twin for home businesses</div>
+    <h1 class="hero-title">Run your kitchen-table<br/><em>business</em> like it has a<br/>full back office.</h1>
+    <p class="hero-sub">Ledger &amp; Loom watches your products, orders, stock and spend, then talks back in plain language — what's selling, what needs restocking, and what to make next week.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#/signup">Create your business ledger →</a>
+      <a class="btn btn-ghost" href="#/login">I already have an account</a>
+    </div>
+    <div class="ledger-strip stitch-card">
+      <div class="li"><div class="num mono">4 min</div><div class="lbl">to set up your first product line</div></div>
+      <div class="li"><div class="num mono">7</div><div class="lbl">core modules — orders to AI insights</div></div>
+      <div class="li"><div class="num mono">0 ₹</div><div class="lbl">spend to try, seeded with demo data</div></div>
+      <div class="li"><div class="num mono">24/7</div><div class="lbl">digital twin watching your stock</div></div>
+    </div>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card stitch-card"><span class="tag-hole"></span><span class="fi">🧾</span><h3>One dashboard, every number</h3><p>Products, orders, inventory and expenses in a single view — built for someone running a business from a home kitchen or workbench, not a warehouse.</p></div>
+    <div class="feature-card stitch-card"><span class="tag-hole"></span><span class="fi">📦</span><h3>Stock that restocks itself in your head</h3><p>Orders quietly deduct from inventory, and the ledger flags anything dipping below your restock line before it becomes a missed sale.</p></div>
+    <div class="feature-card stitch-card"><span class="tag-hole"></span><span class="fi">🤖</span><h3>An AI manager that explains itself</h3><p>Ask what's selling, what's not, and what to make next week — get plain-language answers, not just charts to interpret yourself.</p></div>
+    <div class="feature-card stitch-card"><span class="tag-hole"></span><span class="fi">💰</span><h3>Real profit, not just revenue</h3><p>Cost price and expenses are baked into every insight, so "busy" and "profitable" don't get confused with each other.</p></div>
+    <div class="feature-card stitch-card"><span class="tag-hole"></span><span class="fi">🛍️</span><h3>A minimal storefront for customers</h3><p>Share one link so customers can browse, order and track status — no accounts, no checkout maze, orders land straight in your ledger.</p></div>
+    <div class="feature-card stitch-card"><span class="tag-hole"></span><span class="fi">📤</span><h3>Reports you can actually send</h3><p>Export sales, inventory and expense reports to CSV, or print a clean summary when a supplier or partner asks for numbers.</p></div>
+  </div>
+  <div class="footer-note">Built for the hackathon MVP brief — owner dashboard, inventory, orders and AI insights first.</div>
+  `;
+}
+
+/* =========================================================
+   AUTH SCREENS
+   ========================================================= */
+function renderLogin(){
+  return `<div class="center-screen">
+    <div class="auth-card stitch-card">
+      <span class="tag-hole"></span>
+      <div class="brand" style="margin-bottom:10px;"><span class="mark">L</span></div>
+      <h1>Welcome back</h1>
+      <div class="sub">Log in to your business ledger.</div>
+      <div id="authErr" class="err" style="display:none;"></div>
+      <form id="loginForm">
+        <div class="field"><label>Email</label><input type="email" id="loginEmail" required placeholder="you@business.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPass" required placeholder="••••••••"></div>
+        <button class="btn btn-primary btn-block" type="submit">Log in</button>
+      </form>
+      <div class="demo-box">Demo account — email <b>mira@demo.com</b>, password <b>demo1234</b>. This is a hackathon demo: authentication is simplified and not production-secure.</div>
+      <div class="auth-switch">New here? <a href="#/signup">Create a business ledger</a> · <a href="#/">Back home</a></div>
+    </div>
+  </div>`;
+}
+function bindLogin(){
+  const f = document.getElementById('loginForm');
+  if(!f) return;
+  f.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const email=document.getElementById('loginEmail').value;
+    const pass=document.getElementById('loginPass').value;
+    const res = await doLogin(email,pass);
+    const err = document.getElementById('authErr');
+    if(res.error){ err.textContent=res.error; err.style.display='block'; return; }
+    go('#/dashboard');
+  });
+}
+function renderSignup(){
+  return `<div class="center-screen">
+    <div class="auth-card stitch-card">
+      <span class="tag-hole"></span>
+      <div class="brand" style="margin-bottom:10px;"><span class="mark">L</span></div>
+      <h1>Start your ledger</h1>
+      <div class="sub">Set up your account — you'll add business details next.</div>
+      <div id="authErr" class="err" style="display:none;"></div>
+      <form id="signupForm">
+        <div class="field"><label>Your name</label><input type="text" id="suName" required placeholder="Mira Fernandes"></div>
+        <div class="field"><label>Email</label><input type="email" id="suEmail" required placeholder="you@business.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="suPass" required minlength="6" placeholder="At least 6 characters"></div>
+        <button class="btn btn-primary btn-block" type="submit">Create account</button>
+      </form>
+      <div class="auth-switch">Already have an account? <a href="#/login">Log in</a></div>
+    </div>
+  </div>`;
+}
+function bindSignup(){
+  const f = document.getElementById('signupForm');
+  if(!f) return;
+  f.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name=document.getElementById('suName').value.trim();
+    const email=document.getElementById('suEmail').value;
+    const pass=document.getElementById('suPass').value;
+    const res = await doSignup(name,email,pass);
+    const err = document.getElementById('authErr');
+    if(res.error){ err.textContent=res.error; err.style.display='block'; return; }
+    go('#/dashboard');
+  });
+}
+
+/* =========================================================
+   MESSAGING SIMULATION (WhatsApp / Gmail)
+   ---------------------------------------------------------
+   NOTE: This is a demo simulation. A production build would
+   connect the official WhatsApp Business Platform API and the
+   Gmail API (via a backend with OAuth + webhooks) to push real
+   messages here instead of randomly generating them.
+   ========================================================= */
+const INBOX_TEMPLATES = [
+  ['whatsapp','New order via WhatsApp','"Hi, I\'d like to order 2 boxes of Butter Cookies for Saturday pickup."'],
+  ['whatsapp','Stock enquiry','"Is the Soy Candle — Lavender back in stock yet?"'],
+  ['gmail','New enquiry email','A customer emailed asking about bulk pricing for a birthday order.'],
+  ['gmail','Delivery address update','Customer replied on email with an updated delivery address.'],
+  ['whatsapp','Payment sent','"Sent the payment, please confirm when you get a chance!"'],
+];
+function pushNotification(source,title,body){
+  STATE.notifications.unshift({id:uid('n'), source, title, body, read:false, createdAt:new Date().toISOString()});
+  if(STATE.notifications.length>30) STATE.notifications.length=30;
+  persistNotifications();
+  toast(`${source==='whatsapp'?'📲 WhatsApp':'📧 Gmail'}: ${title}`);
+  refreshBellUI();
+}
+function startSimulatedInbox(){
+  setInterval(()=>{
+    if(!STATE.user) return; // only "arrive" while an owner is logged in / watching
+    if(Math.random()<0.5) return; // don't spam every tick
+    const t = INBOX_TEMPLATES[Math.floor(Math.random()*INBOX_TEMPLATES.length)];
+    pushNotification(t[0], t[1], t[2]);
+  }, 45000);
+}
+function refreshBellUI(){
+  const badge = document.getElementById('bellBadge');
+  const unread = STATE.notifications.filter(n=>!n.read).length;
+  if(badge){ badge.style.display = unread? 'inline-block':'none'; badge.textContent = unread>9?'9+':unread; }
+  const panel = document.getElementById('bellPanel');
+  if(panel) panel.innerHTML = renderBellPanelInner();
+}
+function renderBellButton(){
+  const unread = STATE.notifications.filter(n=>!n.read).length;
+  return `<div class="bell-wrap no-print">
+    <button class="bell-btn" id="bellBtn" title="WhatsApp / Gmail notifications">🔔${unread?`<span class="bell-badge" id="bellBadge">${unread>9?'9+':unread}</span>`:`<span class="bell-badge" id="bellBadge" style="display:none;"></span>`}</button>
+    <div id="bellPanel" style="display:none;" class="bell-panel">${renderBellPanelInner()}</div>
+  </div>`;
+}
+function renderBellPanelInner(){
+  if(!STATE.notifications.length) return `<div class="bell-empty">No messages yet. Orders coming in via WhatsApp or Gmail will show up here.</div>`;
+  return STATE.notifications.slice(0,12).map(n=>`
+    <div class="bell-item" data-notif="${n.id}" style="${n.read?'opacity:.6;':''}">
+      <div class="bi-top"><span>${esc(n.title)}</span><span class="bi-src ${n.source==='whatsapp'?'wa':'gm'}">${n.source==='whatsapp'?'WhatsApp':'Gmail'}</span></div>
+      <div>${esc(n.body)}</div>
+      <div style="color:var(--ink-faint);font-size:10.5px;margin-top:4px;">${new Date(n.createdAt).toLocaleString(undefined,{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'})}</div>
+    </div>`).join('');
+}
+function bindBell(){
+  const btn = document.getElementById('bellBtn');
+  const panel = document.getElementById('bellPanel');
+  if(!btn) return;
+  btn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const open = panel.style.display==='block';
+    panel.style.display = open?'none':'block';
+    if(!open){ STATE.notifications.forEach(n=>n.read=true); persistNotifications(); refreshBellUI(); }
+  });
+  document.addEventListener('click', (e)=>{
+    if(panel && !panel.contains(e.target) && e.target!==btn) panel.style.display='none';
+  });
+}
+
+/* =========================================================
+   AI CHATBOX (site navigation + quick answers)
+   ---------------------------------------------------------
+   Rule-based assistant that helps users find their way around
+   the app and answers a few quick questions from live STATE
+   data. Mounted independently of the hash router so it survives
+   page navigation.
+   ========================================================= */
+const CHAT_INTENTS = [
+  {kws:['dashboard','home','overview'], route:'#/dashboard', reply:'Taking you to the Dashboard — your daily business overview.'},
+  {kws:['product','products','catalogue','catalog','item'], route:'#/products', reply:'Here are your Products — add, edit or pause items here.'},
+  {kws:['order','orders','place order','buy'], route:'#/orders', reply:'Opening Orders — every order from you or your shop page.'},
+  {kws:['inventory','stock'], route:'#/inventory', reply:'Here\'s Inventory — current stock and restock alerts.'},
+  {kws:['expense','expenses','spend','spending'], route:'#/expenses', reply:'Opening Expenses — track materials, packaging and more.'},
+  {kws:['insight','insights','ai','recommend','suggestion'], route:'#/ai-insights', reply:'Here are your AI insights — what to make, sell and watch.'},
+  {kws:['report','reports','export','csv','pdf'], route:'#/reports', reply:'Opening Reports — export or print your numbers.'},
+  {kws:['setting','settings','account'], route:'#/settings', reply:'Here are your Settings.'},
+  {kws:['shop','storefront','customer page'], route:'#/shop', reply:'Here\'s your public shop page, the one customers see.'},
+  {kws:['profile','business name','business profile'], route:'#/profile', reply:'Opening your Business profile.'},
+];
+function chatRespond(raw){
+  const text = raw.toLowerCase();
+  if(/low stock|running low|restock/.test(text)){
+    const ins = computeInsights();
+    return {reply: ins.lowStock.length ? `${ins.lowStock.length} product(s) are low on stock: ${ins.lowStock.slice(0,5).map(p=>p.name).join(', ')}.` : 'Nothing is low on stock right now — you\'re in good shape.'};
+  }
+  if(/best seller|top sell|top product/.test(text)){
+    const ins = computeInsights();
+    return {reply: ins.bestSelling[0] ? `Your top seller is "${ins.bestSelling[0].product.name}" with ${ins.bestSelling[0].qty} units sold.` : 'Not enough sales data yet to tell.'};
+  }
+  if(/revenue|sales total|how much.*(made|earned)/.test(text)){
+    const ins = computeInsights();
+    return {reply: `Total sales so far: ${fmtMoney(ins.totalRevenue)}, with a net profit of ${fmtMoney(ins.profit)}.`};
+  }
+  if(/how many order/.test(text)){
+    return {reply: `You currently have ${STATE.orders.length} orders on record.`};
+  }
+  if(/hi|hello|hey/.test(text)){
+    return {reply: 'Hi! I can help you get around Ledger & Loom — try asking about "low stock", "best seller", "orders", or say a page name like "inventory".'};
+  }
+  for(const intent of CHAT_INTENTS){
+    if(intent.kws.some(k=>text.includes(k))) return {reply: intent.reply, route: intent.route};
+  }
+  return {reply: 'I\'m not sure about that yet — I can help you navigate (try "orders", "inventory", "AI insights", "reports") or answer quick questions like "what\'s low on stock?" or "who\'s my best seller?".'};
+}
+function initChatWidget(){
+  if(document.getElementById('chatWidgetRoot')) return;
+  const root = document.createElement('div');
+  root.id = 'chatWidgetRoot';
+  document.body.appendChild(root);
+  STATE.chatHistory = [{who:'bot', text:'Hi, I\'m your Ledger & Loom assistant! Ask me to take you anywhere, or ask things like "what\'s low on stock?"'}];
+  renderChatWidget();
+}
+function renderChatWidget(){
+  const root = document.getElementById('chatWidgetRoot');
+  if(!root) return;
+  if(!STATE.chatOpen){
+    root.innerHTML = `<button class="chat-fab" id="chatFab" title="Ask the Ledger & Loom assistant">💬</button>`;
+    document.getElementById('chatFab').addEventListener('click', ()=>{ STATE.chatOpen=true; renderChatWidget(); });
+    return;
+  }
+  root.innerHTML = `
+    <div class="chat-panel">
+      <div class="chat-head">
+        <div>Ledger &amp; Loom Assistant<small>Ask me to navigate or answer quick questions</small></div>
+        <button class="icon-btn" id="chatClose" style="background:transparent;border:none;color:#F2EEDF;font-size:16px;">✕</button>
+      </div>
+      <div class="chat-body" id="chatBody">
+        ${STATE.chatHistory.map(m=>`<div class="chat-msg ${m.who}">${esc(m.text)}</div>`).join('')}
+      </div>
+      <div class="chat-quick">
+        ${['Low stock?','Best seller?','Go to orders','Go to reports'].map(q=>`<button data-q="${esc(q)}">${esc(q)}</button>`).join('')}
+      </div>
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="Type a question or a page name…" />
+        <button id="chatSend">➤</button>
+      </div>
+    </div>
+    <button class="chat-fab" id="chatFab" style="display:none;">💬</button>
+  `;
+  document.getElementById('chatClose').addEventListener('click', ()=>{ STATE.chatOpen=false; renderChatWidget(); });
+  const body = document.getElementById('chatBody');
+  body.scrollTop = body.scrollHeight;
+  document.querySelectorAll('.chat-quick button').forEach(b=>b.addEventListener('click', ()=>chatSendMessage(b.dataset.q)));
+  document.getElementById('chatSend').addEventListener('click', ()=>{
+    const input = document.getElementById('chatInput');
+    if(input.value.trim()) chatSendMessage(input.value.trim());
+  });
+  document.getElementById('chatInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' && e.target.value.trim()){ chatSendMessage(e.target.value.trim()); }
+  });
+}
+function chatSendMessage(text){
+  STATE.chatHistory.push({who:'user', text});
+  const res = chatRespond(text);
+  STATE.chatHistory.push({who:'bot', text:res.reply});
+  renderChatWidget();
+  if(res.route){ setTimeout(()=>go(res.route), 500); }
+}
+
+/* =========================================================
+   APP SHELL
+   ========================================================= */
+const NAV = [
+  ['#/dashboard','📊','Dashboard'],
+  ['#/profile','🏷️','Business profile'],
+  ['#/products','🧁','Products'],
+  ['#/orders','🧾','Orders'],
+  ['#/inventory','📦','Inventory'],
+  ['#/expenses','💸','Expenses'],
+  ['#/ai-insights','🤖','AI insights'],
+  ['#/reports','📁','Reports'],
+  ['#/settings','⚙️','Settings'],
+];
+const TITLES = {
+  '#/dashboard':['Dashboard','A morning briefing on your whole business'],
+  '#/profile':['Business profile','Details that appear on receipts and your shop page'],
+  '#/products':['Products','Everything you make or sell'],
+  '#/orders':['Orders','Every order, owner-entered or from the shop page'],
+  '#/inventory':['Inventory','Stock levels and restock alerts'],
+  '#/expenses':['Expenses','Materials, packaging, delivery and more'],
+  '#/ai-insights':['AI insights','Your digital twin, in plain language'],
+  '#/reports':['Reports','Export or print your numbers'],
+  '#/settings':['Settings','Account and preferences'],
+};
+function shellWrap(route, inner){
+  const [title,sub] = TITLES[route] || ['Dashboard',''];
+  const lowCount = STATE.products.filter(p=>Number(p.quantity) < LOW_STOCK_THRESHOLD).length;
+  return `
+  <div class="shell">
+    <div class="sidebar no-print">
+      <div class="brand"><span class="mark">L</span> Ledger &amp; Loom</div>
+      <div class="nav-group">
+        ${NAV.map(n=>`<a class="nav-item ${route===n[0]?'active':''}" href="${n[0]}" style="justify-content:space-between;"><span style="display:flex;align-items:center;gap:10px;"><span class="ic">${n[1]}</span>${n[2]}</span>${n[0]==='#/inventory'&&lowCount?`<span class="badge badge-rust" style="animation:pulseRing 1.6s infinite;">${lowCount}</span>`:''}</a>`).join('')}
+        <a class="nav-item" href="#/shop"><span class="ic">🛍️</span>View shop page</a>
+      </div>
+      <div class="nav-foot">
+        <div class="who">${esc(STATE.user?.name||'')}</div>
+        <button class="btn btn-ghost btn-sm btn-block" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar no-print">
+        <div><h1>${title}</h1><div class="sub">${sub}</div></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          ${renderBellButton()}
+          <div class="badge badge-marigold">${esc(STATE.profile?.businessName||'')}</div>
+        </div>
+      </div>
+      <div class="content">${inner}</div>
+    </div>
+  </div>`;
+}
+function bindShellNav(){
+  const b = document.getElementById('logoutBtn');
+  if(b) b.addEventListener('click', doLogout);
+  bindBell();
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+let lowStockPopupShown = false;
+function afterDashboard(){
+  const ins = computeInsights();
+  const orders = STATE.orders.slice().sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate));
+  const last14 = {};
+  for(let i=13;i>=0;i--){ last14[todayISO(-i)] = 0; }
+  orders.forEach(o=>{ if(last14[o.orderDate]!==undefined) last14[o.orderDate]+=Number(o.totalAmount||0); });
+  drawChart('chartSales','line',{
+    labels:Object.keys(last14).map(d=>d.slice(5)),
+    datasets:[{label:'Sales',data:Object.values(last14),borderColor:'#D98E29',backgroundColor:'rgba(217,142,41,0.15)',fill:true,tension:.35}]
+  },{plugins:{legend:{display:false}}});
+
+  const top = ins.ranked.filter(r=>r.qty>0).slice(0,5);
+  drawChart('chartTop','bar',{
+    labels:top.map(r=>r.product.name.length>14?r.product.name.slice(0,14)+'…':r.product.name),
+    datasets:[{label:'Units sold',data:top.map(r=>r.qty),backgroundColor:'#2F6E62'}]
+  },{plugins:{legend:{display:false}},indexAxis:'y'});
+
+  // interactive 3D-ish tilt on hero item cards and kpi cards
+  document.querySelectorAll('.tilt-card').forEach(card=>{
+    card.addEventListener('mousemove', e=>{
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left)/r.width - 0.5;
+      const y = (e.clientY - r.top)/r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x*10}deg) rotateX(${-y*10}deg) translateY(-3px)`;
+    });
+    card.addEventListener('mouseleave', ()=>{ card.style.transform = ''; });
+  });
+  document.querySelectorAll('.hero-item').forEach(item=>{
+    item.addEventListener('click', ()=> go('#/products'));
+  });
+
+  // count-up animation for KPI numeric values
+  document.querySelectorAll('.kpi-card .val[data-count]').forEach(el=>{
+    const target = Number(el.dataset.count);
+    if(isNaN(target)) return;
+    let cur = 0; const step = Math.max(1, Math.ceil(target/30));
+    const prefix = el.dataset.prefix||'';
+    const iv = setInterval(()=>{
+      cur += step;
+      if(cur>=target){ cur=target; clearInterval(iv); }
+      el.textContent = prefix + cur.toLocaleString();
+    }, 16);
+  });
+
+  document.getElementById('closeShopBtn')?.addEventListener('click', openEodModal);
+
+  // red low-stock warning popup (once per session, only if items below threshold)
+  const criticallyLow = STATE.products.filter(p=>Number(p.quantity) < LOW_STOCK_THRESHOLD);
+  if(criticallyLow.length && !lowStockPopupShown){
+    lowStockPopupShown = true;
+    showLowStockPopup(criticallyLow);
+  }
+}
+function showLowStockPopup(items){
+  const root = document.createElement('div');
+  root.className = 'warn-backdrop';
+  root.id = 'lowStockPopup';
+  root.innerHTML = `
+    <div class="warn-modal">
+      <div class="wm-head"><span class="wm-icon">⚠️</span> Minimal stock warning</div>
+      <div style="font-size:13.5px;color:#7A2E1E;">${items.length} product${items.length>1?'s are':' is'} below ${LOW_STOCK_THRESHOLD} units — restock soon to avoid missed orders:</div>
+      <ul>${items.map(p=>`<li><b>${esc(p.name)}</b> — only ${p.quantity} ${esc(p.unit)} left</li>`).join('')}</ul>
+      <div class="wm-actions">
+        <button class="btn btn-ghost btn-sm" id="wmDismiss">Dismiss</button>
+        <a class="btn btn-danger btn-sm" href="#/inventory">Go to inventory →</a>
+      </div>
+    </div>`;
+  document.body.appendChild(root);
+  document.getElementById('wmDismiss').addEventListener('click', ()=>root.remove());
+  root.addEventListener('click', e=>{ if(e.target.id==='lowStockPopup') root.remove(); });
+}
+function renderDashboard(){
+  const ins = computeInsights();
+  const totalInventory = STATE.products.reduce((s,p)=>s+Number(p.quantity||0),0);
+  const recent = STATE.orders.slice().sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate)).slice(0,5);
+  const todayClosed = STATE.eodLogs.some(l=>l.date===todayISO());
+  const topSellers = ins.ranked.filter(r=>r.qty>0).slice(0,5);
+  const lowSellers = ins.ranked.filter(r=>r.product).slice().sort((a,b)=>a.qty-b.qty).slice(0,5);
+  const maxQty = Math.max(1, ...topSellers.map(r=>r.qty));
+
+  return `
+  <div class="section-title" style="margin-top:0;"><h2>Your shelf, at a glance</h2><div class="sub">Tap a product to jump to Products</div></div>
+  <div class="hero-strip">
+    ${STATE.products.map(p=>{
+      const low = Number(p.quantity) < LOW_STOCK_THRESHOLD;
+      return `<div class="hero-item stitch-card tilt-card ${low?'low':''}"><span class="tag-hole"></span>
+        <span class="hi-emoji">${p.emoji||'🧺'}</span>
+        <div class="hi-name">${esc(p.name)}</div>
+        <div class="hi-sub">${p.quantity} ${esc(p.unit)} in stock</div>
+      </div>`;
+    }).join('') || `<div class="empty">No products yet — add your first one.</div>`}
+  </div>
+
+  <div class="kpi-grid">
+    ${kpi('Total products', STATE.products.length)}
+    ${kpi('Total orders', STATE.orders.length)}
+    ${kpi('Inventory units', totalInventory)}
+    ${kpi('Total sales', fmtMoney(ins.totalRevenue), null, null, ins.totalRevenue, STATE.profile?.currency||'₹')}
+    ${kpi('Total expenses', fmtMoney(ins.totalExpenses))}
+    ${kpi('Profit', fmtMoney(ins.profit), ins.trendUp? `▲ ${Math.abs(ins.trendPct)}% vs last week` : `▼ ${Math.abs(ins.trendPct)}% vs last week`, ins.trendUp?'up':'down')}
+    ${kpi('Low-stock alerts', ins.lowStock.length)}
+    ${kpi('Best seller', ins.bestSelling[0]? ins.bestSelling[0].product.name : '—')}
+  </div>
+
+  ${ins.lowStock.length? `<div class="alert-strip warn"><span class="pulse-dot"></span>${ins.lowStock.length} product${ins.lowStock.length>1?'s are':' is'} at or below restock level: ${esc(ins.lowStock.slice(0,4).map(p=>p.name).join(', '))}${ins.lowStock.length>4?'…':''}</div>` : `<div class="alert-strip ok">✓ All products are above their restock level.</div>`}
+
+  <div class="grid-2">
+    <div class="panel stitch-card tilt-card"><span class="tag-hole"></span><h3>Sales — last 14 days</h3><div class="chart-box"><canvas id="chartSales"></canvas></div></div>
+    <div class="panel stitch-card tilt-card"><span class="tag-hole"></span><h3>Top sellers (units)</h3><div class="chart-box"><canvas id="chartTop"></canvas></div></div>
+  </div>
+
+  <div class="grid-2b" style="margin-top:16px;">
+    <div class="panel stitch-card"><span class="tag-hole"></span>
+      <h3>🏆 Top selling products</h3>
+      ${topSellers.length? topSellers.map((r,i)=>`
+        <div class="seller-row"><span class="s-rank">${i+1}</span><span class="s-name">${esc(r.product.name)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${(r.qty/maxQty*100).toFixed(0)}%;background:var(--teal);"></div></div>
+          <span class="s-qty">${r.qty} sold</span></div>`).join('') : `<div class="empty">No sales yet</div>`}
+    </div>
+    <div class="panel stitch-card"><span class="tag-hole"></span>
+      <h3>📉 Slow / low selling products</h3>
+      ${lowSellers.length? lowSellers.map((r,i)=>`
+        <div class="seller-row"><span class="s-rank">${i+1}</span><span class="s-name">${esc(r.product.name)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${maxQty?(r.qty/maxQty*100).toFixed(0):0}%;background:var(--rust);"></div></div>
+          <span class="s-qty">${r.qty} sold</span></div>`).join('') : `<div class="empty">No product data yet</div>`}
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:16px;">
+    <div class="panel stitch-card"><span class="tag-hole"></span>
+      <h3>Recent orders</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Customer</th><th>Product</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody>
+        ${recent.map(o=>{
+          const p = productById(o.productId);
+          return `<tr><td>${esc(o.customerName)}</td><td>${esc(p?p.name:'—')}</td><td class="mono">${fmtMoney(o.totalAmount)}</td><td>${statusBadge(o.deliveryStatus)}${o.deliveryStatus==='Pending'&&o.pendingReason?`<div class="row-sub">${esc(o.pendingReason)}</div>`:''}</td></tr>`;
+        }).join('') || `<tr><td colspan="4" class="empty">No orders yet</td></tr>`}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="panel stitch-card"><span class="tag-hole"></span>
+      <h3>AI recommendations</h3>
+      ${ins.suggestions.slice(0,4).map(s=>`<div class="insight-card" style="padding:10px 0;box-shadow:none;border:none;background:none;"><span class="ii">✦</span><p>${esc(s)}</p></div>`).join('')}
+      <a class="btn btn-ghost btn-sm" href="#/ai-insights" style="margin-top:8px;">Open full AI insights →</a>
+    </div>
+  </div>
+
+  <div class="panel stitch-card" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;"><span class="tag-hole"></span>
+    <div><h3 style="margin-bottom:2px;">End of day</h3><p style="margin:0;font-size:13px;color:var(--ink-soft);">Log today's close so leftover stock is recorded and nothing gets forgotten overnight.</p></div>
+    ${todayClosed? `<span class="badge badge-teal">✓ Closed for today</span>` : `<button class="btn btn-primary" id="closeShopBtn">🔒 Closing the shop?</button>`}
+  </div>
+  <div id="modalRoot"></div>
+  `;
+}
+function kpi(label,val,delta,dir,countTarget,prefix){
+  const numeric = typeof countTarget === 'number' && !isNaN(countTarget);
+  return `<div class="kpi-card stitch-card tilt-card"><span class="tag-hole"></span>
+    <div class="lbl">${esc(label)}</div>
+    <div class="val mono" ${numeric?`data-count="${Math.round(countTarget)}" data-prefix="${esc(prefix||'')}"`:''}>${numeric? esc(prefix||'')+'0' : esc(val)}</div>
+    ${delta?`<div class="delta ${dir}">${esc(delta)}</div>`:''}
+  </div>`;
+}
+function statusBadge(status){
+  const map = {
+    'Delivered':'badge-teal','Confirmed':'badge-marigold','Packed':'badge-marigold',
+    'Pending':'badge-neutral','Cancelled':'badge-rust','Paid':'badge-teal'
+  };
+  return `<span class="badge ${map[status]||'badge-neutral'}">${esc(status)}</span>`;
+}
+function openEodModal(){
+  let root = document.getElementById('modalRoot');
+  if(!root){ root = document.createElement('div'); root.id='modalRoot'; document.body.appendChild(root); }
+  root.innerHTML = `
+  <div class="modal-backdrop" id="eodBackdrop">
+    <div class="modal eod-modal stitch-card"><span class="tag-hole"></span>
+      <span class="eod-icon">🔒</span>
+      <h2>Are you closing the shop for today?</h2>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin-top:-8px;">If yes, I'll note down what's left on the shelf so you (or tomorrow-you) know what's still around.</p>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button class="btn btn-primary" id="eodYes">Yes, closing up</button>
+        <button class="btn btn-ghost" id="eodNo">Not yet</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('eodNo').addEventListener('click', ()=>{ root.innerHTML=''; });
+  document.getElementById('eodBackdrop').addEventListener('click', e=>{ if(e.target.id==='eodBackdrop') root.innerHTML=''; });
+  document.getElementById('eodYes').addEventListener('click', ()=>showLeftoverReport(root));
+}
+function showLeftoverReport(root){
+  const leftover = STATE.products.filter(p=>Number(p.quantity)>0).sort((a,b)=>a.quantity-b.quantity);
+  root.innerHTML = `
+  <div class="modal-backdrop" id="eodBackdrop2">
+    <div class="modal eod-modal stitch-card"><span class="tag-hole"></span>
+      <span class="eod-icon">🌙</span>
+      <h2>Leftover stock tonight</h2>
+      <p style="font-size:13px;color:var(--ink-soft);margin-top:-8px;">${leftover.length} item type${leftover.length===1?'':'s'} still on the shelf. This has been logged.</p>
+      <div style="max-height:240px;overflow-y:auto;margin:12px 0;">
+        ${leftover.length? leftover.map(p=>`<div class="leftover-item"><span>${p.emoji||'🧺'} ${esc(p.name)}</span><span class="mono">${p.quantity} ${esc(p.unit)}</span></div>`).join('') : `<div class="empty">Nothing left — sold out today! 🎉</div>`}
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="eodDone">Done, close shop</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('eodDone').addEventListener('click', async ()=>{
+    STATE.eodLogs.push({id:uid('eod'), date:todayISO(), leftover: leftover.map(p=>({name:p.name, quantity:p.quantity, unit:p.unit})), createdAt:new Date().toISOString()});
+    await persistEodLogs();
+    root.innerHTML='';
+    toast('Shop closed for today — leftover stock logged 🌙');
+    render();
+  });
+}
+function drawChart(id,type,data,extra){
+  const el = document.getElementById(id);
+  if(!el || typeof Chart==='undefined') return;
+  if(STATE.charts[id]) STATE.charts[id].destroy();
+  STATE.charts[id] = new Chart(el.getContext('2d'), {
+    type, data,
+    options: Object.assign({responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,grid:{color:'#DED3B4'}},x:{grid:{display:false}}}}, extra||{})
+  });
+}
+
+/* =========================================================
+   BUSINESS PROFILE
+   ========================================================= */
+function afterProfile(){
+  const f = document.getElementById('profileForm');
+  if(!f) return;
+  f.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    STATE.profile = {
+      businessName: document.getElementById('pfName').value.trim(),
+      category: document.getElementById('pfCategory').value.trim(),
+      ownerName: document.getElementById('pfOwner').value.trim(),
+      contact: document.getElementById('pfContact').value.trim(),
+      description: document.getElementById('pfDesc').value.trim(),
+      currency: document.getElementById('pfCurrency').value,
+    };
+    await persistProfile();
+    toast('Business profile saved');
+    render();
+  });
+}
+function renderProfile(){
+  const p = STATE.profile || {};
+  return `
+  <div class="panel stitch-card" style="max-width:640px;"><span class="tag-hole"></span>
+    <h3>Business details</h3>
+    <form id="profileForm">
+      <div class="field"><label>Business name</label><input id="pfName" value="${esc(p.businessName)}" required></div>
+      <div class="field-row">
+        <div class="field"><label>Category</label><input id="pfCategory" value="${esc(p.category)}" placeholder="e.g. Homemade Food"></div>
+        <div class="field"><label>Currency symbol</label><input id="pfCurrency" value="${esc(p.currency||'₹')}" maxlength="3"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Owner name</label><input id="pfOwner" value="${esc(p.ownerName)}"></div>
+        <div class="field"><label>Contact</label><input id="pfContact" value="${esc(p.contact)}"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="pfDesc" rows="3" placeholder="A line customers will see on your shop page">${esc(p.description)}</textarea></div>
+      <button class="btn btn-primary" type="submit">Save profile</button>
+    </form>
+  </div>`;
+}
+
+/* =========================================================
+   PRODUCTS
+   ========================================================= */
+let productFilter = '';
+function afterProducts(){
+  const s = document.getElementById('prodSearch');
+  if(s) s.addEventListener('input', e=>{ productFilter=e.target.value.toLowerCase(); rerenderList('productList', renderProductRows()); });
+  document.getElementById('addProductBtn')?.addEventListener('click', ()=>openProductModal());
+  document.querySelectorAll('[data-edit-product]').forEach(b=>b.addEventListener('click',()=>openProductModal(b.dataset.editProduct)));
+  document.querySelectorAll('[data-del-product]').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.delProduct)));
+}
+function rerenderList(id, html){ const el=document.getElementById(id); if(el) el.innerHTML = html; bindAfterListSwap(); }
+function bindAfterListSwap(){
+  document.getElementById('addProductBtn')?.addEventListener('click', ()=>openProductModal());
+  document.querySelectorAll('[data-edit-product]').forEach(b=>b.addEventListener('click',()=>openProductModal(b.dataset.editProduct)));
+  document.querySelectorAll('[data-del-product]').forEach(b=>b.addEventListener('click',()=>deleteProduct(b.dataset.delProduct)));
+}
+function renderProductRows(){
+  const list = STATE.products.filter(p=> (p.name+p.category).toLowerCase().includes(productFilter));
+  if(!list.length) return `<div class="empty"><span class="ei">🧁</span>No products match. Try a different search or add one.</div>`;
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Cost</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    ${list.map(p=>`
+      <tr>
+        <td><span style="margin-right:6px;">${p.emoji||'🧺'}</span><span class="row-title">${esc(p.name)}</span></td>
+        <td>${esc(p.category)}</td>
+        <td class="mono">${fmtMoney(p.price)}</td>
+        <td class="mono">${fmtMoney(p.costPrice)}</td>
+        <td class="mono">${p.quantity} ${esc(p.unit)} ${Number(p.quantity)<=Number(p.restockLevel)?'<span class="badge badge-rust" style="margin-left:6px;">Low</span>':''}</td>
+        <td>${p.status==='active'?'<span class="badge badge-teal">Active</span>':'<span class="badge badge-neutral">Paused</span>'}</td>
+        <td style="white-space:nowrap;">
+          <button class="icon-btn" data-edit-product="${p.id}">Edit</button>
+          <button class="icon-btn" data-del-product="${p.id}">Delete</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+function renderProducts(){
+  return `
+  <div class="toolbar">
+    <div class="search"><input type="text" id="prodSearch" placeholder="Search products by name or category…" style="width:100%;"></div>
+    <button class="btn btn-primary" id="addProductBtn">+ Add product</button>
+  </div>
+  <div class="panel stitch-card"><span class="tag-hole"></span>
+    <div id="productList">${renderProductRows()}</div>
+  </div>
+  <div id="modalRoot"></div>
+  `;
+}
+function openProductModal(id){
+  const p = id ? productById(id) : null;
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+  <div class="modal-backdrop" id="pmBackdrop">
+    <div class="modal stitch-card"><span class="tag-hole"></span>
+      <h2>${p?'Edit product':'Add product'}</h2>
+      <form id="productForm">
+        <div class="field"><label>Product name</label><input id="pmName" required value="${esc(p?.name||'')}"></div>
+        <div class="field-row">
+          <div class="field"><label>Category</label><input id="pmCategory" required value="${esc(p?.category||'')}"></div>
+          <div class="field"><label>Emoji tag</label><select id="pmEmoji">${EMOJIS.map(em=>`<option ${p?.emoji===em?'selected':''}>${em}</option>`).join('')}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Price</label><input id="pmPrice" type="number" min="0" step="0.01" required value="${p?.price??''}"></div>
+          <div class="field"><label>Cost price</label><input id="pmCost" type="number" min="0" step="0.01" required value="${p?.costPrice??''}"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Quantity in stock</label><input id="pmQty" type="number" min="0" required value="${p?.quantity??0}"></div>
+          <div class="field"><label>Unit</label><select id="pmUnit">${UNITS.map(u=>`<option ${p?.unit===u?'selected':''}>${u}</option>`).join('')}</select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Restock level</label><input id="pmRestock" type="number" min="0" required value="${p?.restockLevel??5}"></div>
+          <div class="field"><label>Status</label><select id="pmStatus"><option value="active" ${p?.status==='active'?'selected':''}>Active</option><option value="paused" ${p?.status==='paused'?'selected':''}>Paused</option></select></div>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="pmNotes" rows="2">${esc(p?.notes||'')}</textarea></div>
+        <div class="err" id="pmErr" style="display:none;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="pmCancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">${p?'Save changes':'Add product'}</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+  document.getElementById('pmCancel').addEventListener('click', closeModal);
+  document.getElementById('pmBackdrop').addEventListener('click', e=>{ if(e.target.id==='pmBackdrop') closeModal(); });
+  document.getElementById('productForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const price = Number(document.getElementById('pmPrice').value);
+    const cost = Number(document.getElementById('pmCost').value);
+    const qty = Number(document.getElementById('pmQty').value);
+    const restock = Number(document.getElementById('pmRestock').value);
+    if(qty<0 || restock<0 || price<0 || cost<0){ showErr('pmErr','Values cannot be negative.'); return; }
+    const data = {
+      name: document.getElementById('pmName').value.trim(),
+      category: document.getElementById('pmCategory').value.trim(),
+      emoji: document.getElementById('pmEmoji').value,
+      price, costPrice: cost, quantity: qty, unit: document.getElementById('pmUnit').value,
+      restockLevel: restock, status: document.getElementById('pmStatus').value,
+      notes: document.getElementById('pmNotes').value.trim(),
+    };
+    if(!data.name){ showErr('pmErr','Product name is required.'); return; }
+    if(p){ Object.assign(p, data); }
+    else { STATE.products.push(Object.assign({id:uid('p'), createdAt:new Date().toISOString()}, data)); }
+    await persistProducts();
+    closeModal();
+    toast(p?'Product updated':'Product added');
+    render();
+  });
+}
+function showErr(id,msg){ const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; }
+function closeModal(){ const r=document.getElementById('modalRoot'); if(r) r.innerHTML=''; }
+async function deleteProduct(id){
+  if(!confirm('Delete this product? This cannot be undone.')) return;
+  STATE.products = STATE.products.filter(p=>p.id!==id);
+  await persistProducts();
+  toast('Product deleted');
+  render();
+}
+
+/* =========================================================
+   ORDERS
+   ========================================================= */
+let orderFilter = {status:'all', search:''};
+function afterOrders(){
+  document.getElementById('addOrderBtn')?.addEventListener('click', ()=>openOrderModal());
+  document.getElementById('orderSearch')?.addEventListener('input', e=>{ orderFilter.search=e.target.value.toLowerCase(); refreshOrderList(); });
+  document.getElementById('orderStatusFilter')?.addEventListener('change', e=>{ orderFilter.status=e.target.value; refreshOrderList(); });
+  bindOrderRowButtons();
+}
+function refreshOrderList(){ document.getElementById('orderList').innerHTML = renderOrderRows(); bindOrderRowButtons(); }
+function bindOrderRowButtons(){
+  document.querySelectorAll('[data-order-status]').forEach(sel=>sel.addEventListener('change', e=>updateOrderStatus(sel.dataset.orderStatus, e.target.value)));
+  document.querySelectorAll('[data-del-order]').forEach(b=>b.addEventListener('click',()=>deleteOrder(b.dataset.delOrder)));
+  document.querySelectorAll('[data-set-reason]').forEach(b=>b.addEventListener('click', ()=>setPendingReason(b.dataset.setReason)));
+}
+async function setPendingReason(id){
+  const o = STATE.orders.find(x=>x.id===id);
+  if(!o) return;
+  const reason = prompt(`Why is this order pending?\n\n${PENDING_REASONS.join('\n')}\n\n(type your own reason or pick one of the above)`, o.pendingReason||'');
+  if(reason===null) return;
+  o.pendingReason = reason.trim();
+  await persistOrders();
+  toast('Pending reason saved');
+  refreshOrderList();
+}
+function renderOrderRows(){
+  let list = STATE.orders.slice().sort((a,b)=>new Date(b.orderDate)-new Date(a.orderDate));
+  if(orderFilter.status!=='all') list = list.filter(o=>o.deliveryStatus===orderFilter.status);
+  if(orderFilter.search) list = list.filter(o=> (o.customerName+ (productById(o.productId)?.name||'')).toLowerCase().includes(orderFilter.search));
+  if(!list.length) return `<div class="empty"><span class="ei">🧾</span>No orders match your filters.</div>`;
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Baked / Expiry</th><th>Total</th><th>Pay method</th><th>Payment</th><th>Delivery</th><th>Source</th><th></th></tr></thead>
+    <tbody>
+    ${list.map(o=>{
+      const p = productById(o.productId);
+      const expiringSoon = o.expiryDate && new Date(o.expiryDate) < new Date(Date.now()+1000*60*60*24*2) && new Date(o.expiryDate) >= new Date(todayISO());
+      const expired = o.expiryDate && new Date(o.expiryDate) < new Date(todayISO());
+      const showReason = (o.deliveryStatus==='Pending' || o.paymentStatus==='Pending');
+      return `<tr>
+        <td>${fmtDate(o.orderDate)}</td>
+        <td>${esc(o.customerName)}<div class="row-sub">${esc(o.phone||'')}</div></td>
+        <td>${esc(p?p.name:'Deleted product')}</td>
+        <td class="mono">${o.quantity}</td>
+        <td style="font-size:11.5px;">
+          <div>Baked: ${fmtDate(o.bakedDate)}</div>
+          <div class="${expired?'expiry-warn':''}">${expired?'⚠️ Expired: ':'Best before: '}${fmtDate(o.expiryDate)}${expiringSoon&&!expired?' ⏳':''}</div>
+        </td>
+        <td class="mono">${fmtMoney(o.totalAmount)}</td>
+        <td><span class="badge badge-neutral">${esc(o.paymentMethod||'Cash/UPI')}</span></td>
+        <td>${statusBadge(o.paymentStatus)}</td>
+        <td>
+          <select class="icon-btn" data-order-status="${o.id}">
+            ${['Pending','Confirmed','Packed','Delivered','Cancelled'].map(s=>`<option ${o.deliveryStatus===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+          ${showReason ? `<div class="row-sub" style="margin-top:4px;max-width:150px;">${o.pendingReason?'⏸ '+esc(o.pendingReason):'<span data-set-reason="'+o.id+'" style="cursor:pointer;text-decoration:underline;">+ add reason</span>'}</div>` : ''}
+        </td>
+        <td>${o.source==='customer'?'<span class="badge badge-marigold">Shop</span>':'<span class="badge badge-neutral">Owner</span>'}</td>
+        <td><button class="icon-btn" data-del-order="${o.id}">Delete</button></td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div>`;
+}
+function renderOrders(){
+  return `
+  <div class="toolbar">
+    <div class="search"><input type="text" id="orderSearch" placeholder="Search by customer or product…" style="width:100%;"></div>
+    <select id="orderStatusFilter">
+      <option value="all">All statuses</option>
+      ${['Pending','Confirmed','Packed','Delivered','Cancelled'].map(s=>`<option value="${s}">${s}</option>`).join('')}
+    </select>
+    <button class="btn btn-primary" id="addOrderBtn">+ Add order</button>
+  </div>
+  <div class="panel stitch-card"><span class="tag-hole"></span>
+    <div id="orderList">${renderOrderRows()}</div>
+  </div>
+  <div id="modalRoot"></div>
+  `;
+}
+function openOrderModal(){
+  if(!STATE.products.length){ toast('Add a product before creating an order'); return; }
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+  <div class="modal-backdrop" id="omBackdrop">
+    <div class="modal stitch-card"><span class="tag-hole"></span>
+      <h2>Add order</h2>
+      <form id="orderForm">
+        <div class="field"><label>Customer name</label><input id="omName" required></div>
+        <div class="field-row">
+          <div class="field"><label>Phone</label><input id="omPhone" placeholder="10-digit number"></div>
+          <div class="field"><label>Order date</label><input id="omDate" type="date" value="${todayISO()}" required></div>
+        </div>
+        <div class="field"><label>Product</label>
+          <select id="omProduct" required>
+            ${STATE.products.map(p=>`<option value="${p.id}" data-price="${p.price}" data-stock="${p.quantity}">${esc(p.name)} — ${fmtMoney(p.price)} (${p.quantity} ${esc(p.unit)} left)</option>`).join('')}
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Quantity</label><input id="omQty" type="number" min="1" value="1" required></div>
+          <div class="field"><label>Total amount</label><input id="omTotal" type="number" min="0" step="0.01" readonly></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Baked date</label><input id="omBaked" type="date" value="${todayISO()}"></div>
+          <div class="field"><label>Expiry date</label><input id="omExpiry" type="date" value="${todayISO(4)}"></div>
+        </div>
+        <div class="field"><label>Payment method</label>
+          <div class="pay-methods" id="omPayMethods">
+            ${PAY_METHODS.map((m,i)=>`<div class="pay-opt ${i===0?'selected':''}" data-method="${m[0]}"><span class="po-ic">${m[1]}</span>${m[0]}</div>`).join('')}
+          </div>
+          <input type="hidden" id="omMethod" value="${PAY_METHODS[0][0]}">
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Payment status</label><select id="omPay"><option>Paid</option><option>Pending</option></select></div>
+          <div class="field"><label>Delivery status</label><select id="omDel">${['Pending','Confirmed','Packed','Delivered'].map(s=>`<option>${s}</option>`).join('')}</select></div>
+        </div>
+        <div class="field" id="omReasonField" style="display:none;"><label>Reason it's pending</label>
+          <select id="omReason">${PENDING_REASONS.map(r=>`<option>${r}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Delivery address / note</label><input id="omAddr" placeholder="Optional"></div>
+        <div class="err" id="omErr" style="display:none;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="omCancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add order</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+  const productSel = document.getElementById('omProduct');
+  const qtyInput = document.getElementById('omQty');
+  const totalInput = document.getElementById('omTotal');
+  function recalc(){
+    const opt = productSel.selectedOptions[0];
+    const price = Number(opt.dataset.price);
+    totalInput.value = (price*Number(qtyInput.value||0)).toFixed(2);
+  }
+  productSel.addEventListener('change', recalc);
+  qtyInput.addEventListener('input', recalc);
+  recalc();
+  document.getElementById('omCancel').addEventListener('click', closeModal);
+  document.getElementById('omBackdrop').addEventListener('click', e=>{ if(e.target.id==='omBackdrop') closeModal(); });
+
+  document.querySelectorAll('#omPayMethods .pay-opt').forEach(opt=>opt.addEventListener('click', ()=>{
+    document.querySelectorAll('#omPayMethods .pay-opt').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+    document.getElementById('omMethod').value = opt.dataset.method;
+  }));
+  const payStatusSel = document.getElementById('omPay'), delStatusSel = document.getElementById('omDel'), reasonField = document.getElementById('omReasonField');
+  function toggleReason(){ reasonField.style.display = (payStatusSel.value==='Pending' || delStatusSel.value==='Pending') ? 'block' : 'none'; }
+  payStatusSel.addEventListener('change', toggleReason);
+  delStatusSel.addEventListener('change', toggleReason);
+  toggleReason();
+
+  function finalizeOrder(){
+    const productId = productSel.value;
+    const p = productById(productId);
+    const qty = Number(qtyInput.value);
+    const order = {
+      id:uid('o'), customerName:document.getElementById('omName').value.trim(),
+      phone:document.getElementById('omPhone').value.trim(),
+      productId, quantity:qty, totalAmount:Number(totalInput.value),
+      paymentStatus:payStatusSel.value,
+      deliveryStatus:delStatusSel.value,
+      pendingReason:(payStatusSel.value==='Pending'||delStatusSel.value==='Pending') ? document.getElementById('omReason').value : '',
+      bakedDate:document.getElementById('omBaked').value,
+      expiryDate:document.getElementById('omExpiry').value,
+      paymentMethod:document.getElementById('omMethod').value,
+      orderDate:document.getElementById('omDate').value,
+      address:document.getElementById('omAddr').value.trim(),
+      source:'owner', createdAt:new Date().toISOString()
+    };
+    STATE.orders.push(order);
+    p.quantity -= qty;
+    Promise.all([persistOrders(), persistProducts()]).then(()=>{
+      closeModal();
+      toast('Order added and stock updated');
+      render();
+    });
+  }
+
+  document.getElementById('orderForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const productId = productSel.value;
+    const p = productById(productId);
+    const qty = Number(qtyInput.value);
+    if(qty<1){ showErr('omErr','Quantity must be at least 1.'); return; }
+    if(qty > p.quantity){ showErr('omErr',`Only ${p.quantity} ${p.unit} in stock.`); return; }
+    const method = document.getElementById('omMethod').value;
+    if(method!=='Cash/UPI' && payStatusSel.value==='Paid'){
+      launchOnlinePayment(method, Number(totalInput.value), finalizeOrder, ()=>showErr('omErr','Payment was not completed.'));
+    } else {
+      finalizeOrder();
+    }
+  });
+}
+
+/* =========================================================
+   PAYMENT MODULE — Razorpay / PayPal
+   ---------------------------------------------------------
+   DEMO MODE: uses Razorpay's public test key placeholder and
+   PayPal's sandbox client-id placeholder. For real transactions,
+   replace these with your live/test credentials and verify
+   payments server-side (Razorpay order + signature check, or
+   PayPal order capture) — client-side alone is not sufficient
+   for production payment security.
+   ========================================================= */
+const RAZORPAY_KEY_ID = 'rzp_test_REPLACE_WITH_YOUR_KEY';
+function launchOnlinePayment(method, amount, onSuccess, onFail){
+  if(method==='Razorpay'){
+    if(typeof Razorpay==='undefined'){ toast('Razorpay SDK unavailable — check network settings'); onFail&&onFail(); return; }
+    const rzp = new Razorpay({
+      key: RAZORPAY_KEY_ID,
+      amount: Math.round(amount*100),
+      currency:'INR',
+      name: STATE.profile?.businessName || 'Ledger & Loom',
+      description:'Order payment',
+      theme:{color:'#B4721B'},
+      handler:function(response){ toast('Payment successful ✓'); onSuccess(); },
+      modal:{ ondismiss: function(){ onFail && onFail(); } }
+    });
+    rzp.open();
+    return;
+  }
+  if(method==='PayPal'){
+    // Sandbox-style confirmation flow; wire up the real PayPal Buttons SDK
+    // (paypal.com/sdk/js?client-id=YOUR_ID) with server-side order capture for production.
+    if(confirm(`Simulate PayPal checkout for ${fmtMoney(amount)}? (Demo mode — connect PayPal SDK + backend capture for live payments.)`)){
+      toast('PayPal payment confirmed ✓');
+      onSuccess();
+    } else { onFail && onFail(); }
+    return;
+  }
+  onSuccess();
+}
+async function updateOrderStatus(id, status){
+  const o = STATE.orders.find(x=>x.id===id);
+  if(!o) return;
+  o.deliveryStatus = status;
+  if(status==='Pending' && !o.pendingReason){
+    const reason = prompt(`This order is now Pending. What's the reason?\n\n${PENDING_REASONS.join('\n')}`, PENDING_REASONS[0]);
+    if(reason) o.pendingReason = reason.trim();
+  }
+  await persistOrders();
+  toast('Order status updated');
+  refreshOrderList();
+}
+async function deleteOrder(id){
+  if(!confirm('Delete this order? Stock will be restored.')) return;
+  const o = STATE.orders.find(x=>x.id===id);
+  if(o){
+    const p = productById(o.productId);
+    if(p) p.quantity += Number(o.quantity);
+    STATE.orders = STATE.orders.filter(x=>x.id!==id);
+    await Promise.all([persistOrders(), persistProducts()]);
+  }
+  toast('Order deleted');
+  render();
+}
+
+/* =========================================================
+   INVENTORY
+   ========================================================= */
+function afterInventory(){
+  document.querySelectorAll('[data-restock]').forEach(b=>b.addEventListener('click', async ()=>{
+    const p = productById(b.dataset.restock);
+    const amt = prompt(`Add how many ${p.unit} to "${p.name}"?`, Math.max(p.restockLevel*2 - p.quantity, 5));
+    if(amt===null) return;
+    const n = Number(amt);
+    if(!n || n<=0) return;
+    p.quantity += n;
+    await persistProducts();
+    toast(`Restocked ${p.name}`);
+    render();
+  }));
+}
+function renderInventory(){
+  const sorted = STATE.products.slice().sort((a,b)=> (a.quantity-a.restockLevel) - (b.quantity-b.restockLevel) );
+  const low = sorted.filter(p=>p.quantity<=p.restockLevel);
+  return `
+  ${low.length? `<div class="alert-strip warn">⚠️ Restock needed: ${esc(low.map(p=>p.name).join(', '))}</div>` : `<div class="alert-strip ok">✓ Everything is stocked above its restock level.</div>`}
+  <div class="panel stitch-card"><span class="tag-hole"></span>
+    <h3>Stock levels</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Product</th><th>Current stock</th><th>Restock level</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      ${sorted.map(p=>{
+        const pct = p.restockLevel>0? Math.min(100, Math.round((p.quantity/(p.restockLevel*2))*100)) : 100;
+        const low = p.quantity<=p.restockLevel;
+        return `<tr>
+          <td><span style="margin-right:6px;">${p.emoji||'🧺'}</span>${esc(p.name)}</td>
+          <td class="mono">${p.quantity} ${esc(p.unit)}</td>
+          <td class="mono">${p.restockLevel} ${esc(p.unit)}</td>
+          <td>
+            <div style="width:120px;height:7px;border-radius:5px;background:var(--paper-deep);overflow:hidden;">
+              <div style="width:${pct}%;height:100%;background:${low?'var(--rust)':'var(--teal)'};"></div>
+            </div>
+            ${low?'<span class="badge badge-rust" style="margin-top:4px;display:inline-block;">Restock now</span>':'<span class="badge badge-teal" style="margin-top:4px;display:inline-block;">Healthy</span>'}
+          </td>
+          <td><button class="icon-btn" data-restock="${p.id}">+ Restock</button></td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="5" class="empty">No products yet</td></tr>`}
+      </tbody>
+    </table></div>
+  </div>`;
+}
+
+/* =========================================================
+   EXPENSES
+   ========================================================= */
+function afterExpenses(){
+  document.getElementById('addExpenseBtn')?.addEventListener('click', openExpenseModal);
+  document.querySelectorAll('[data-del-expense]').forEach(b=>b.addEventListener('click',()=>deleteExpense(b.dataset.delExpense)));
+}
+function renderExpenses(){
+  const rows = STATE.expenses.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const total = rows.reduce((s,e)=>s+Number(e.amount),0);
+  const byType = {};
+  rows.forEach(e=> byType[e.type] = (byType[e.type]||0)+Number(e.amount));
+  return `
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+    ${kpi('Total expenses', fmtMoney(total))}
+    ${Object.entries(byType).slice(0,3).map(([t,v])=>kpi(t, fmtMoney(v))).join('')}
+  </div>
+  <div class="toolbar"><div style="flex:1;"></div><button class="btn btn-primary" id="addExpenseBtn">+ Add expense</button></div>
+  <div class="panel stitch-card"><span class="tag-hole"></span>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th></th></tr></thead>
+      <tbody>
+      ${rows.map(e=>`<tr>
+        <td>${fmtDate(e.date)}</td>
+        <td><span class="badge badge-neutral">${esc(e.type)}</span></td>
+        <td>${esc(e.description||'—')}</td>
+        <td class="mono">${fmtMoney(e.amount)}</td>
+        <td><button class="icon-btn" data-del-expense="${e.id}">Delete</button></td>
+      </tr>`).join('') || `<tr><td colspan="5" class="empty">No expenses logged yet</td></tr>`}
+      </tbody>
+    </table></div>
+  </div>
+  <div id="modalRoot"></div>
+  `;
+}
+function openExpenseModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+  <div class="modal-backdrop" id="emBackdrop">
+    <div class="modal stitch-card"><span class="tag-hole"></span>
+      <h2>Add expense</h2>
+      <form id="expenseForm">
+        <div class="field-row">
+          <div class="field"><label>Type</label><select id="emType">${EXPENSE_TYPES.map(t=>`<option>${t}</option>`).join('')}</select></div>
+          <div class="field"><label>Date</label><input id="emDate" type="date" value="${todayISO()}" required></div>
+        </div>
+        <div class="field"><label>Amount</label><input id="emAmount" type="number" min="0" step="0.01" required></div>
+        <div class="field"><label>Description</label><input id="emDesc" placeholder="Optional note"></div>
+        <div class="err" id="emErr" style="display:none;"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="emCancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add expense</button>
+        </div>
+      </form>
+    </div>
+  </div>`;
+  document.getElementById('emCancel').addEventListener('click', closeModal);
+  document.getElementById('emBackdrop').addEventListener('click', e=>{ if(e.target.id==='emBackdrop') closeModal(); });
+  document.getElementById('expenseForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const amount = Number(document.getElementById('emAmount').value);
+    if(amount<=0){ showErr('emErr','Amount must be greater than zero.'); return; }
+    STATE.expenses.push({
+      id:uid('e'), type:document.getElementById('emType').value, amount,
+      description:document.getElementById('emDesc').value.trim(),
+      date:document.getElementById('emDate').value, createdAt:new Date().toISOString()
+    });
+    await persistExpenses();
+    closeModal();
+    toast('Expense added');
+    render();
+  });
+}
+async function deleteExpense(id){
+  if(!confirm('Delete this expense?')) return;
+  STATE.expenses = STATE.expenses.filter(e=>e.id!==id);
+  await persistExpenses();
+  toast('Expense deleted');
+  render();
+}
+
+/* =========================================================
+   AI INSIGHTS PAGE
+   ========================================================= */
+function afterAIInsights(){
+  const ins = computeInsights();
+  const top = ins.ranked.filter(r=>r.qty>0).slice(0,6);
+  drawChart('chartProfitTrend','bar',{
+    labels:['Last week','This week'],
+    datasets:[{label:'Gross margin',data:[ins.lastWeek, ins.thisWeek],backgroundColor:['#C9BE9D','#D98E29']}]
+  },{plugins:{legend:{display:false}}});
+  drawChart('chartRevenueMix','bar',{
+    labels:top.map(r=>r.product.name.length>12?r.product.name.slice(0,12)+'…':r.product.name),
+    datasets:[{label:'Revenue',data:top.map(r=>r.revenue),backgroundColor:'#2F6E62'}]
+  },{plugins:{legend:{display:false}}});
+}
+function renderAIInsights(){
+  const ins = computeInsights();
+  return `
+  <div class="narrative stitch-card" style="margin-bottom:20px;"><span class="tag-hole"></span>${esc(ins.narrative)}</div>
+
+  <div class="grid-2">
+    <div class="panel stitch-card"><span class="tag-hole"></span><h3>Profit trend — this week vs last</h3><div class="chart-box"><canvas id="chartProfitTrend"></canvas></div></div>
+    <div class="panel stitch-card"><span class="tag-hole"></span><h3>Revenue by product</h3><div class="chart-box"><canvas id="chartRevenueMix"></canvas></div></div>
+  </div>
+
+  <div class="section-title"><h2>What to make next week</h2></div>
+  ${ins.productionRecs.length ? ins.productionRecs.map(r=>`
+    <div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">🧑‍🍳</span>
+      <div><h4>Produce ~${r.suggestQty} more ${esc(r.product.name)}</h4><p>It's a top seller currently at ${r.product.quantity} ${esc(r.product.unit)}, near or below its restock level of ${r.product.restockLevel}.</p></div>
+    </div>`).join('') : `<div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">✓</span><div><h4>No urgent production needed</h4><p>Your best sellers currently have healthy stock levels.</p></div></div>`}
+
+  <div class="section-title"><h2>Underperforming products</h2></div>
+  ${ins.underperforming.filter(r=>r.product).length ? ins.underperforming.map(r=>`
+    <div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">📉</span>
+      <div><h4>${esc(r.product.name)}</h4><p>${r.qty} units sold — well below your average of ${STATE.products.length?Math.round(ins.ranked.reduce((s,x)=>s+x.qty,0)/ins.ranked.length):0} per product. Consider a bundle, discount, or retiring it.</p></div>
+    </div>`).join('') : `<div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">✓</span><div><h4>Nothing significantly underperforming</h4><p>Sales are fairly even across your catalogue.</p></div></div>`}
+
+  <div class="section-title"><h2>Business risks</h2></div>
+  ${ins.risks.map(r=>`<div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">⚠️</span><div><p>${esc(r)}</p></div></div>`).join('')}
+
+  <div class="section-title"><h2>Suggestions to improve sales</h2></div>
+  ${ins.suggestions.map(s=>`<div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">✦</span><div><p>${esc(s)}</p></div></div>`).join('')}
+  `;
+}
+
+/* =========================================================
+   REPORTS
+   ========================================================= */
+let reportTab = 'sales';
+function afterReports(){
+  document.querySelectorAll('[data-report-tab]').forEach(t=>t.addEventListener('click', ()=>{ reportTab=t.dataset.reportTab; render(); }));
+  document.getElementById('exportCsvBtn')?.addEventListener('click', exportReportCsv);
+  document.getElementById('printBtn')?.addEventListener('click', ()=>window.print());
+}
+function reportRows(){
+  if(reportTab==='sales') return STATE.orders.map(o=>{ const p=productById(o.productId); return {Date:o.orderDate, Customer:o.customerName, Product:p?p.name:'—', Qty:o.quantity, Amount:o.totalAmount, Payment:o.paymentStatus, Delivery:o.deliveryStatus}; });
+  if(reportTab==='inventory') return STATE.products.map(p=>({Product:p.name, Category:p.category, Stock:p.quantity, Unit:p.unit, RestockLevel:p.restockLevel, Status: p.quantity<=p.restockLevel?'Low':'OK'}));
+  if(reportTab==='expenses') return STATE.expenses.map(e=>({Date:e.date, Type:e.type, Description:e.description, Amount:e.amount}));
+  if(reportTab==='profit'){
+    const ins = computeInsights();
+    return [{Metric:'Total revenue',Value:ins.totalRevenue},{Metric:'Total cost of goods',Value:ins.totalCost},{Metric:'Total expenses',Value:ins.totalExpenses},{Metric:'Net profit',Value:ins.profit}];
+  }
+  return [];
+}
+function exportReportCsv(){
+  const rows = reportRows();
+  if(!rows.length){ toast('Nothing to export'); return; }
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.join(',')].concat(rows.map(r=>headers.map(h=>`"${String(r[h]??'').replace(/"/g,'""')}"`).join(','))).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${reportTab}-report-${todayISO()}.csv`;
+  a.click();
+}
+function renderReports(){
+  const rows = reportRows();
+  const headers = rows.length ? Object.keys(rows[0]) : [];
+  return `
+  <div class="tabs no-print">
+    ${[['sales','Sales'],['inventory','Inventory'],['expenses','Expenses'],['profit','Profit']].map(t=>`<div class="tab ${reportTab===t[0]?'active':''}" data-report-tab="${t[0]}">${t[1]}</div>`).join('')}
+  </div>
+  <div class="toolbar no-print">
+    <div style="flex:1;font-size:13px;color:var(--ink-soft);">${rows.length} row${rows.length===1?'':'s'}</div>
+    <button class="btn btn-ghost btn-sm" id="printBtn">🖨️ Print / save PDF</button>
+    <button class="btn btn-primary btn-sm" id="exportCsvBtn">⬇ Export CSV</button>
+  </div>
+  <div class="panel stitch-card"><span class="tag-hole"></span>
+    <h3 style="text-transform:capitalize;">${esc(reportTab)} report — ${esc(STATE.profile?.businessName||'')}</h3>
+    <div class="table-wrap"><table>
+      <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${headers.map(h=>`<td class="${typeof r[h]==='number'?'mono':''}">${typeof r[h]==='number' && (h==='Amount'||h==='Value')? fmtMoney(r[h]) : esc(r[h])}</td>`).join('')}</tr>`).join('') || `<tr><td class="empty">No data</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+/* =========================================================
+   SETTINGS
+   ========================================================= */
+function afterSettings(){
+  document.getElementById('resetDemoBtn')?.addEventListener('click', async ()=>{
+    if(!confirm('Reset all business data to fresh demo data? This affects everyone viewing this app.')) return;
+    STATE.products = seedProducts();
+    STATE.orders = seedOrders(STATE.products);
+    STATE.expenses = seedExpenses();
+    await persistAll();
+    toast('Demo data reset');
+    go('#/dashboard');
+  });
+  document.getElementById('simWhatsapp')?.addEventListener('click', ()=>{
+    const t = INBOX_TEMPLATES.find(x=>x[0]==='whatsapp');
+    pushNotification('whatsapp', t[1], t[2]);
+  });
+  document.getElementById('simGmail')?.addEventListener('click', ()=>{
+    const t = INBOX_TEMPLATES.find(x=>x[0]==='gmail');
+    pushNotification('gmail', t[1], t[2]);
+  });
+}
+function renderSettings(){
+  return `
+  <div class="panel stitch-card" style="max-width:640px;"><span class="tag-hole"></span>
+    <h3>Account</h3>
+    <div class="field"><label>Name</label><input value="${esc(STATE.user?.name||'')}" disabled></div>
+    <div class="field"><label>Email</label><input value="${esc(STATE.user?.email||'')}" disabled></div>
+    <div class="hint">Editable account settings are out of scope for this hackathon MVP.</div>
+  </div>
+
+  <div class="panel stitch-card" style="max-width:640px;margin-top:16px;"><span class="tag-hole"></span>
+    <h3>💳 Payments — Razorpay &amp; PayPal</h3>
+    <p style="font-size:13px;color:var(--ink-soft);line-height:1.6;">Order forms now offer Razorpay and PayPal alongside Cash/UPI. This build wires up Razorpay's client-side Checkout and a PayPal confirmation flow in <b>test/demo mode</b>. To accept real payments:</p>
+    <ul style="font-size:12.5px;color:var(--ink-soft);line-height:1.8;padding-left:18px;">
+      <li>Replace the demo Razorpay key with your live/test <code>key_id</code> from the Razorpay dashboard.</li>
+      <li>Add the PayPal JS SDK with your client ID and render real Buttons.</li>
+      <li>Verify every payment on a server (Razorpay signature check, or PayPal order capture) before marking an order "Paid" — this can't be done safely from the browser alone.</li>
+    </ul>
+  </div>
+
+  <div class="panel stitch-card" style="max-width:640px;margin-top:16px;"><span class="tag-hole"></span>
+    <h3>📲 WhatsApp &amp; Gmail order notifications</h3>
+    <p style="font-size:13px;color:var(--ink-soft);line-height:1.6;">The bell icon in the top bar simulates orders/enquiries arriving via WhatsApp or Gmail so you can see how live notifications would feel. Try it:</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;">
+      <button class="btn btn-ghost btn-sm" id="simWhatsapp">📲 Simulate WhatsApp message</button>
+      <button class="btn btn-ghost btn-sm" id="simGmail">📧 Simulate Gmail enquiry</button>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-faint);line-height:1.7;">For real automation, connect a backend that uses the official <b>WhatsApp Business Platform API</b> and <b>Gmail API</b> (OAuth + webhooks), and pushes incoming messages into this notification feed instead of the random simulator.</p>
+  </div>
+
+  <div class="panel stitch-card" style="max-width:640px;margin-top:16px;"><span class="tag-hole"></span>
+    <h3>Data</h3>
+    <p style="font-size:13px;color:var(--ink-soft);">Business data (products, orders, expenses) is shared across everyone who opens this app link — handy for demoing the owner and customer views together.</p>
+    <button class="btn btn-danger btn-sm" id="resetDemoBtn">Reset to fresh demo data</button>
+  </div>`;
+}
+
+/* =========================================================
+   CUSTOMER SHOP (public, minimal)
+   ========================================================= */
+function renderShop(){
+  const products = STATE.products.filter(p=>p.status==='active');
+  return `
+  <div class="shop-nav no-print">
+    <div class="brand"><span class="mark">L</span> ${esc(STATE.profile?.businessName||'Shop')}</div>
+    <div style="display:flex;gap:10px;">
+      <a class="btn btn-ghost btn-sm" href="#/shop-status">Track order</a>
+      <a class="btn btn-ghost btn-sm" href="#/">Owner site</a>
+    </div>
+  </div>
+  <div class="shop-wrap">
+    <p style="color:var(--ink-soft);max-width:520px;">${esc(STATE.profile?.description||'')}</p>
+    <div class="product-grid" style="margin-top:20px;">
+      ${products.map(p=>{
+        const out = p.quantity<=0;
+        return `<div class="product-card stitch-card"><span class="tag-hole"></span>
+          <div class="product-emoji">${p.emoji||'🧺'}</div>
+          <h3>${esc(p.name)}</h3>
+          <div class="cat">${esc(p.category)}</div>
+          <div class="price">${fmtMoney(p.price)}</div>
+          <div class="stock-line">${out? '<span class="badge badge-rust">Out of stock</span>' : `<span class="badge badge-teal">${p.quantity} available</span>`}</div>
+          <a class="btn btn-primary btn-sm btn-block" style="margin-top:12px;${out?'pointer-events:none;opacity:.5;':''}" href="#/shop-order?p=${p.id}">Order this</a>
+        </div>`;
+      }).join('') || `<div class="empty">No products available right now — check back soon.</div>`}
+    </div>
+  </div>`;
+}
+function bindShop(){}
+function renderShopOrder(){
+  const params = new URLSearchParams((location.hash.split('?')[1])||'');
+  const preselect = params.get('p');
+  const products = STATE.products.filter(p=>p.status==='active' && p.quantity>0);
+  return `
+  <div class="shop-nav no-print"><div class="brand"><span class="mark">L</span> ${esc(STATE.profile?.businessName||'Shop')}</div><a class="btn btn-ghost btn-sm" href="#/shop">← Back to products</a></div>
+  <div class="shop-wrap" style="max-width:520px;">
+    <div class="panel stitch-card"><span class="tag-hole"></span>
+      <h3>Place an order</h3>
+      <div id="soErr" class="err" style="display:none;"></div>
+      <div id="soConfirm" style="display:none;"></div>
+      <form id="shopOrderForm">
+        <div class="field"><label>Your name</label><input id="soName" required></div>
+        <div class="field"><label>Phone number</label><input id="soPhone" required placeholder="10-digit number"></div>
+        <div class="field"><label>Product</label>
+          <select id="soProduct" required>${products.map(p=>`<option value="${p.id}" ${p.id===preselect?'selected':''} data-price="${p.price}" data-stock="${p.quantity}">${esc(p.name)} — ${fmtMoney(p.price)}</option>`).join('')}</select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Quantity</label><input id="soQty" type="number" min="1" value="1" required></div>
+          <div class="field"><label>Total</label><input id="soTotal" readonly></div>
+        </div>
+        <div class="hint" id="soFreshness" style="margin:-6px 0 14px;"></div>
+        <div class="field"><label>Pay with</label>
+          <div class="pay-methods" id="soPayMethods">
+            ${PAY_METHODS.map((m,i)=>`<div class="pay-opt ${i===0?'selected':''}" data-method="${m[0]}"><span class="po-ic">${m[1]}</span>${m[0]}</div>`).join('')}
+          </div>
+          <input type="hidden" id="soMethod" value="${PAY_METHODS[0][0]}">
+        </div>
+        <div class="field"><label>Delivery address or pickup note</label><textarea id="soAddr" rows="2" required></textarea></div>
+        <button class="btn btn-primary btn-block" type="submit">Submit order</button>
+      </form>
+    </div>
+  </div>`;
+}
+function bindShopOrder(){
+  const sel = document.getElementById('soProduct');
+  const qty = document.getElementById('soQty');
+  const total = document.getElementById('soTotal');
+  const freshness = document.getElementById('soFreshness');
+  if(!sel) return;
+  function recalc(){
+    const opt = sel.selectedOptions[0];
+    if(!opt){ total.value=''; return; }
+    total.value = fmtMoney(Number(opt.dataset.price)*Number(qty.value||0));
+    if(freshness) freshness.textContent = `Freshly baked ${fmtDate(todayISO())} · best before ${fmtDate(todayISO(4))}`;
+  }
+  sel.addEventListener('change', recalc);
+  qty.addEventListener('input', recalc);
+  recalc();
+  document.querySelectorAll('#soPayMethods .pay-opt').forEach(opt=>opt.addEventListener('click', ()=>{
+    document.querySelectorAll('#soPayMethods .pay-opt').forEach(o=>o.classList.remove('selected'));
+    opt.classList.add('selected');
+    document.getElementById('soMethod').value = opt.dataset.method;
+  }));
+
+  function placeOrder(paymentStatus){
+    const p = productById(sel.value);
+    const q = Number(qty.value);
+    const order = {
+      id:uid('o'), customerName:document.getElementById('soName').value.trim(),
+      phone:document.getElementById('soPhone').value.trim(), productId:p.id, quantity:q,
+      totalAmount:p.price*q, paymentStatus, deliveryStatus:'Pending',
+      pendingReason: paymentStatus==='Pending' ? 'Awaiting payment confirmation' : '',
+      bakedDate:todayISO(), expiryDate:todayISO(4),
+      paymentMethod: document.getElementById('soMethod').value,
+      orderDate:todayISO(), address:document.getElementById('soAddr').value.trim(),
+      source:'customer', createdAt:new Date().toISOString()
+    };
+    p.quantity -= q;
+    STATE.orders.push(order);
+    Promise.all([persistOrders(), persistProducts()]).then(()=>{
+      pushNotification(Math.random()<0.5?'whatsapp':'gmail', 'New order placed on shop page', `${order.customerName} ordered ${q} × ${p.name}.`);
+      document.getElementById('shopOrderForm').style.display='none';
+      const c = document.getElementById('soConfirm');
+      c.style.display='block';
+      c.innerHTML = `<div class="alert-strip ok">✓ Order placed! Your order ID is <b class="mono">${order.id}</b>. Save it, or your phone number, to track status.</div>
+        <div class="hint">Baked ${fmtDate(order.bakedDate)} · Best before ${fmtDate(order.expiryDate)}</div>
+        <a class="btn btn-ghost btn-block" href="#/shop-status" style="margin-top:10px;">Track this order →</a>`;
+    });
+  }
+
+  document.getElementById('shopOrderForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const opt = sel.selectedOptions[0];
+    if(!opt){ showErr('soErr','No product selected.'); return; }
+    const p = productById(sel.value);
+    const q = Number(qty.value);
+    if(q<1 || q>p.quantity){ showErr('soErr', `Only ${p.quantity} ${p.unit} available.`); return; }
+    const method = document.getElementById('soMethod').value;
+    if(method!=='Cash/UPI'){
+      launchOnlinePayment(method, p.price*q, ()=>placeOrder('Paid'), ()=>placeOrder('Pending'));
+    } else {
+      placeOrder('Pending');
+    }
+  });
+}
+function renderShopStatus(){
+  return `
+  <div class="shop-nav no-print"><div class="brand"><span class="mark">L</span> ${esc(STATE.profile?.businessName||'Shop')}</div><a class="btn btn-ghost btn-sm" href="#/shop">← Back to products</a></div>
+  <div class="shop-wrap" style="max-width:520px;">
+    <div class="panel stitch-card"><span class="tag-hole"></span>
+      <h3>Track your order</h3>
+      <div class="field"><label>Order ID or phone number</label><input id="statusQuery" placeholder="o_xxxxxxx or your phone number"></div>
+      <button class="btn btn-primary" id="statusBtn">Check status</button>
+      <div id="statusResult" style="margin-top:18px;"></div>
+    </div>
+  </div>`;
+}
+function bindShopStatus(){
+  document.getElementById('statusBtn')?.addEventListener('click', ()=>{
+    const q = document.getElementById('statusQuery').value.trim().toLowerCase();
+    const results = STATE.orders.filter(o=> o.id.toLowerCase()===q || (o.phone||'').includes(q));
+    const el = document.getElementById('statusResult');
+    if(!q || !results.length){ el.innerHTML = `<div class="alert-strip warn">No matching order found. Double-check the ID or phone number.</div>`; return; }
+    el.innerHTML = results.map(o=>{
+      const p = productById(o.productId);
+      return `<div class="insight-card stitch-card"><span class="tag-hole"></span><span class="ii">📦</span>
+        <div><h4>${esc(p?p.name:'Order')} × ${o.quantity}</h4>
+        <p>Placed ${fmtDate(o.orderDate)} · ${statusBadge(o.deliveryStatus)} · ${statusBadge(o.paymentStatus)}</p></div></div>`;
+    }).join('');
+  });
+}
+
+/* =========================================================
+   START
+   ========================================================= */
+boot();
+</script>
+</body>
+</html>
